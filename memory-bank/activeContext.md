@@ -1,23 +1,24 @@
-# Active Context
+# 현재 컨텍스트
 
-## Current Work Focus
+## 현재 작업 초점
 
-- **UI Implementation:** The current focus is to connect the created components and display them on the main page.
+- **세션 종료:** 이번 세션으로 초기 프로젝트 설정이 마무리됩니다. 다음 세션에서는 1단계: 핵심 기능 개발을 시작합니다.
 
-## Recent Changes
+## 최근 변경사항
 
-- **Project Structure:** The initial file and folder structure has been created, including API routes, components, and library files.
-- **Dependencies:** `clsx` and `tailwind-merge` were installed to support the `cn` utility function.
-- **Environment:** The `.env.local` file has been created with placeholder keys.
+- **Git:** 초기 프로젝트 상태가 원격 GitHub 리포지토리에 커밋되고 푸시되었습니다.
+- **UI 테스트:** 기본 UI 구성 요소가 렌더링되고 브라우저에서 확인되었습니다.
 
-## Next Steps
+## 다음 단계
 
-1.  **Integrate Components:** Import and render the `FileUploader` and `VideoPlayer` components in the main `page.tsx`.
-2.  **Implement Basic State Management:** Create state to handle the video source URL for the `VideoPlayer`.
-3.  **Test UI:** Run the development server to ensure the basic UI components are rendering correctly.
-4.  **Implement Supabase Client:** The `supabase.ts` file is created, but it needs to be properly integrated and used.
+1.  **환경 변수 채우기:** 사용자는 `.env.local`에 실제 API 키와 Supabase 자격 증명을 입력해야 합니다.
+2.  **자막 편집기 개선:** 자막 편집기의 기능을 확장하고 사용자 경험을 개선합니다.
+3.  **번역 언어 선택 기능:** 사용자가 자막을 번역할 목표 언어를 선택할 수 있도록 기능을 추가합니다.
+4.  **자막 다운로드 기능:** 사용자가 번역된 자막을 SRT 형식으로 다운로드할 수 있도록 기능을 추가합니다.
+5.  **오류 처리 및 사용자 피드백:** 애플리케이션 전반에 걸쳐 강력한 오류 처리 메커니즘과 사용자 피드백 시스템을 통합합니다.
 
-## Active Decisions & Considerations
+## 현재 결정 및 고려사항
 
-- **Project Name:** The project name was changed from "SubTranslate" to "sub-translate" to comply with npm naming conventions.
-- **Bundler:** Turbopack was selected for the `next dev` server during setup. This is a performance enhancement for development.
+- **프로젝트 이름:** npm 이름 지정 규칙을 준수하기 위해 프로젝트 이름이 "SubTranslate"에서 "sub-translate"으로 변경되었습니다.
+- **Bundler:** 설정 중에 `next dev` 서버용으로 Turbopack이 선택되었습니다. 이는 개발 성능 향상을 위한 것입니다.
+- **RLS 문제 해결:** `projects` 테이블 삽입 시 발생하던 RLS 위반 오류가 해결되었습니다. (원인: `projects` 테이블이 존재하지 않았고, RLS 정책 설정이 정확하지 않았음. 해결: 테이블 생성 및 `authenticated` 역할에 대한 `INSERT` 및 `SELECT` 정책 올바르게 설정).

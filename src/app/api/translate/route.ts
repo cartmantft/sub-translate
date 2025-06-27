@@ -1,31 +1,44 @@
 import { NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY as string);
 
 export async function POST(request: Request) {
-  // TODO: Implement the logic to take text,
-  // send it to Gemini API, and get the translation.
-
   try {
     const { text, targetLanguage } = await request.json();
 
     if (!text || !targetLanguage) {
-      return NextResponse.json({
-        success: false,
-        error: 'Text and target language are required.',
-      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Text and target language are required.',
+        },
+        { status: 400 }
+      );
     }
 
-    console.log(`Translating to ${targetLanguage}:`, text);
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const prompt = `Translate the following text to ${targetLanguage}: "${text}"`;
 
-    // Placeholder response
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const translation = response.text();
+
     return NextResponse.json({
       success: true,
-      translation: `This is a placeholder translation to ${targetLanguage}.`,
-    });
+      translation,
+    }, { status: 200 }); // Explicitly set status to 200 for success
   } catch (error) {
     console.error('Error in translate route:', error);
-    return NextResponse.json({
-      success: false,
-      error: 'An error occurred during translation.',
-    });
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred';
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'An error occurred during translation.',
+        details: errorMessage,
+      },
+      { status: 500 }
+    );
   }
 }

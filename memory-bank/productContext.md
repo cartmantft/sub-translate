@@ -1,18 +1,18 @@
-# Product Context
+# 제품 컨텍스트
 
-## Problem
+## 문제점
 
-- Manually creating and translating subtitles for videos is a time-consuming and often expensive process.
-- Non-native speakers have difficulty understanding video content without accurate subtitles in their own language.
-- Content creators want to reach a global audience but are limited by the language barrier.
+- 비디오 자막을 수동으로 만들고 번역하는 것은 시간이 많이 걸리고 종종 비용이 많이 드는 프로세스입니다.
+- 비원어민은 자국어로 된 정확한 자막 없이는 비디오 콘텐츠를 이해하기 어렵습니다.
+- 콘텐츠 제작자는 전 세계 시청자에게 다가가고 싶지만 언어 장벽에 의해 제한됩니다.
 
-## Solution
+## 해결책
 
-SubTranslate aims to solve these problems by providing a simple, automated platform for generating and translating video subtitles. By leveraging AI for transcription and translation, we can significantly reduce the time and cost associated with making video content accessible to a wider audience.
+SubTranslate는 비디오 자막을 생성하고 번역하기 위한 간단하고 자동화된 플랫폼을 제공하여 이러한 문제를 해결하는 것을 목표로 합니다. AI를 활용하여 텍스트 변환 및 번역을 수행함으로써 비디오 콘텐츠를 더 많은 시청자가 이용할 수 있도록 하는 데 드는 시간과 비용을 크게 줄일 수 있습니다.
 
-## User Experience Goals
+## 사용자 경험 목표
 
-- **Simplicity:** The user journey from uploading a video to getting translated subtitles should be as simple and intuitive as possible, requiring minimal steps.
-- **Speed:** Users should receive their translated subtitles quickly.
-- **Accuracy:** The quality of both the transcription and the translation should be high.
-- **Control:** Users should be able to review and, if necessary, edit the generated subtitles.
+- **단순성:** 비디오를 업로드하여 번역된 자막을 얻기까지의 사용자 여정은 가능한 한 간단하고 직관적이어야 하며 최소한의 단계만 필요해야 합니다.
+- **속도:** 사용자는 번역된 자막을 신속하게 받아야 합니다.
+- **정확성:** 텍스트 변환과 번역의 품질이 모두 높아야 합니다.
+- **제어:** 사용자는 생성된 자막을 검토하고 필요한 경우 편집할 수 있어야 합니다.

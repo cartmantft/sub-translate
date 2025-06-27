@@ -1,18 +1,18 @@
-# Project Brief: SubTranslate
+# 프로젝트 개요: SubTranslate
 
-## Overview
+## 개요
 
-SubTranslate is a web application designed to automatically extract subtitles from video files and translate them into the user's desired language.
+SubTranslate는 비디오 파일에서 자막을 자동으로 추출하고 사용자가 원하는 언어로 번역하도록 설계된 웹 애플리케이션입니다.
 
-## Core Requirements
+## 핵심 요구사항
 
-- **Video Upload:** Users can upload video files from their local machine.
-- **Subtitle Extraction:** The system will use an AI service (like Whisper) to transcribe the audio from the video into text with timestamps.
-- **Language Translation:** The extracted subtitles will be translated into various languages using an LLM service (like Gemini).
-- **Display and Download:** Users can view the video with the translated subtitles and download the subtitle file (e.g., in SRT format).
+- **비디오 업로드:** 사용자는 로컬 컴퓨터에서 비디오 파일을 업로드할 수 있습니다.
+- **자막 추출:** 시스템은 Whisper와 같은 AI 서비스를 사용하여 비디오의 오디오를 타임스탬프가 있는 텍스트로 변환합니다.
+- **언어 번역:** 추출된 자막은 Gemini와 같은 LLM 서비스를 사용하여 다양한 언어로 번역됩니다.
+- **표시 및 다운로드:** 사용자는 번역된 자막과 함께 비디오를 보고 자막 파일(예: SRT 형식)을 다운로드할 수 있습니다.
 
-## Goals
+## 목표
 
-- To provide a fast and accurate subtitle generation and translation service.
-- To create an intuitive and user-friendly interface.
-- To build a scalable and maintainable application using modern web technologies.
+- 빠르고 정확한 자막 생성 및 번역 서비스를 제공합니다.
+- 직관적이고 사용자 친화적인 인터페이스를 만듭니다.
+- 최신 웹 기술을 사용하여 확장 가능하고 유지 관리 가능한 애플리케이션을 구축합니다.
