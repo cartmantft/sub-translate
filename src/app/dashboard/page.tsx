@@ -7,10 +7,18 @@ import VideoThumbnail from '@/components/VideoThumbnail';
 export default async function DashboardPage() {
   const supabase = await createClient();
 
+  // 먼저 세션이 있는지 확인
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+    data: { session },
+  } = await supabase.auth.getSession();
+  
+  if (!session) {
+    redirect('/login');
+  }
+  
+  // 세션이 있을 경우에만 getUser 호출
+  const { data: { user } } = await supabase.auth.getUser();
+  
   if (!user) {
     redirect('/login');
   }

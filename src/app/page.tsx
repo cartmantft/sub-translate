@@ -7,11 +7,33 @@ import MainContent from '@/components/MainContent';
 export default async function Home() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  console.log('Current user ID:', user?.id);
+  // 개발 환경에서는 세션 검증을 더 엄격하게
+  let user = null;
+  
+  try {
+    // 먼저 세션이 있는지 확인
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      user = null;
+    } else if (session) {
+      // 세션이 있을 경우에만 getUser 호출하여 유효성 검증
+      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !authUser) {
+        // 세션은 있지만 유효하지 않음
+        console.error('Invalid session:', userError);
+        await supabase.auth.signOut();
+        user = null;
+      } else {
+        user = authUser;
+      }
+    }
+  } catch (error) {
+    console.error('Auth check error:', error);
+    user = null;
+  }
 
   const signOut = async () => {
     'use server';

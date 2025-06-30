@@ -8,6 +8,28 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // Skip auth check for public routes
+  const publicRoutes = ['/login', '/signup']
+  const publicApiRoutes = ['/api/auth']
+  const path = request.nextUrl.pathname
+  
+  // Check if it's a public route or public API route
+  if (publicRoutes.includes(path) || publicApiRoutes.some(route => path.startsWith(route))) {
+    return response
+  }
+  
+  // 개발 환경에서는 홈페이지도 인증 확인 (자동 로그인 방지)
+  const isHomePage = path === '/'
+  const isDevelopment = process.env.NODE_ENV === 'development'
+
+  // Only check auth for protected routes
+  const protectedRoutes = ['/dashboard', '/projects']
+  const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route))
+  
+  if (!isProtectedRoute) {
+    return response
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -54,7 +76,22 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  // Check session first
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  if (!session && isProtectedRoute) {
+    // Redirect to login if not authenticated
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+  
+  // Verify user only if session exists
+  if (session && isProtectedRoute) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      // Session exists but user is invalid - clear and redirect
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+  }
 
   return response
 }

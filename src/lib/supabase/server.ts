@@ -31,6 +31,11 @@ export async function createClient() {
           }
         },
       },
+      auth: {
+        detectSessionInUrl: false,
+        persistSession: true,  // 기본값으로 되돌림
+        autoRefreshToken: true,
+      },
     }
   )
 }

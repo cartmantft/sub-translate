@@ -12,11 +12,21 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // Check if user is already logged in
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push('/dashboard');
+      }
+    };
+    
+    checkUser();
+
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (session) {
-          // User is logged in, redirect to home page
-          router.push('/');
+        if (event === 'SIGNED_IN' && session) {
+          // User just signed in, redirect to dashboard
+          router.push('/dashboard');
         }
       }
     );
@@ -120,7 +130,7 @@ export default function LoginPage() {
                 },
               }}
               providers={['google', 'github']}
-              redirectTo={`${window.location.origin}/auth/callback`}
+              redirectTo={typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '/auth/callback'}
               localization={{
                 variables: {
                   sign_in: {

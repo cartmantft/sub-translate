@@ -126,9 +126,22 @@
      - MainContent.tsx와 ProjectPageContent.tsx 모두 동일한 컴포넌트 사용
    - **결과**: 원본 대본과 번역 자막 모두에서 타임라인 기능 지원, 완전한 UI/UX 일관성 달성
 
+9. **인증 플로우 및 세션 관리 문제** ✅ **해결됨** (2025-06-30)
+   - **문제**: 개발 환경에서 서버 재시작 시 로그인 상태가 유지되어 예기치 않은 동작 발생
+   - **원인**: Supabase의 자동 세션 저장 기능으로 인한 로컬 스토리지 지속성
+   - **해결**:
+     - Supabase 클라이언트 설정에 `persistSession: false` 옵션 추가
+     - 개발 환경에서 세션을 메모리에만 저장하도록 변경
+     - Navigation 컴포넌트 UI/UX 개선 (로그인/로그아웃 버튼 스타일)
+     - `/api/auth/logout` API 엔드포인트 추가로 완전한 로그아웃 구현
+     - 클라이언트와 서버 양쪽에서 세션 정리 처리
+   - **결과**: 개발 환경에서 예측 가능한 인증 상태, 완전한 로그아웃 기능 구현
+
 ## 해결된 문제
 
 - **`projects` 테이블 RLS 위반 오류:** `new row violates row-level security policy` 오류는 `projects` 테이블이 존재하지 않았고, `INSERT` 및 `SELECT` RLS 정책이 `public` 역할로 잘못 설정되어 발생했습니다. 테이블 생성 및 `authenticated` 역할에 대한 정책을 올바르게 설정하여 해결되었습니다.
+
+- **개발 환경 세션 지속성 문제:** 서버 재시작 후에도 로그인 상태가 유지되어 예상치 못한 동작이 발생하는 문제를 `persistSession: false` 설정으로 해결했습니다. 개발 환경에서 세션이 메모리에만 저장되어 서버 재시작 시 깨끗한 상태로 시작됩니다.
 
 ## 기술적 구현 세부사항
 
@@ -145,6 +158,37 @@ src/components/
 ```
 
 ### 최근 기술적 개선사항
+
+#### 인증 시스템 개선 (2025-06-30)
+**Supabase 클라이언트 설정**:
+```typescript
+// 개발 환경에서 세션 지속성 비활성화
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      persistSession: false  // 개발 환경에서 메모리에만 세션 저장
+    }
+  }
+)
+```
+
+**완전한 로그아웃 API**:
+```typescript
+// /api/auth/logout 엔드포인트
+export async function POST() {
+  const supabase = createServerClient(/* ... */)
+  await supabase.auth.signOut()
+  // 클라이언트와 서버 양쪽 세션 정리
+}
+```
+
+**주요 개선사항**:
+- 개발 환경에서 예측 가능한 인증 상태
+- 서버 재시작 시 로그인 상태 초기화
+- 완전한 로그아웃 플로우 구현
+- Navigation 컴포넌트 UI/UX 개선
 
 #### UnifiedSubtitleViewer 컴포넌트
 ```typescript
