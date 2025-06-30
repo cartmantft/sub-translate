@@ -17,17 +17,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const prompt = `Translate the following text to ${targetLanguage}: "${text}"`;
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const translation = response.text();
+    // Temporary dummy translation for testing
+    console.log(`Translating to ${targetLanguage}:`, text);
+    
+    // Simple mock translation
+    const translation = `[Translated to ${targetLanguage}] ${text}`;
 
     return NextResponse.json({
       success: true,
       translation,
-    }, { status: 200 }); // Explicitly set status to 200 for success
+    }, { status: 200 });
   } catch (error) {
     console.error('Error in translate route:', error);
     const errorMessage =
