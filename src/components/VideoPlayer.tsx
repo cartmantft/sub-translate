@@ -67,11 +67,12 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
   }
 
   return (
-    <div className="relative w-full overflow-hidden rounded-lg shadow-lg bg-black">
+    <div className="relative w-full flex justify-center bg-black rounded-lg shadow-lg overflow-hidden">
       <video 
         ref={videoRef}
         controls 
-        className="w-full h-auto max-w-full rounded-lg"
+        className="max-w-full max-h-[70vh] h-auto object-contain rounded-lg"
+        style={{ aspectRatio: 'auto' }}
       >
         <source src={src} type="video/mp4" />
         Your browser does not support the video tag.

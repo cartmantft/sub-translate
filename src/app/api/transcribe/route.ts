@@ -16,8 +16,15 @@ export async function POST(request: Request) {
 
     console.log('Received file:', file.name);
 
+    console.log('File details:', {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
+    
+    // For OpenAI API, we can pass the file directly
     const transcription = await openai.audio.transcriptions.create({
-      file,
+      file: file,
       model: 'whisper-1',
       response_format: 'verbose_json',
       timestamp_granularities: ['segment']

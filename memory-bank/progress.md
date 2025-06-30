@@ -1,8 +1,14 @@
 # 프로젝트 진행 상황
 
-## 현재 상태: `🎉 MVP + 전문적인 UI/UX 완성!`
+## 현재 상태: `🎉 SubTranslate 완전 완성!`
 
-이 프로젝트는 **완전히 작동하는 SubTranslate MVP + 전문적인 UI/UX**가 완성되었습니다! 모든 핵심 기능이 end-to-end로 연결되어 있으며, 홈페이지, 로그인, 대시보드, 메인 콘텐츠까지 일관된 디자인 시스템으로 실제 서비스 수준의 사용자 경험을 제공합니다.
+이 프로젝트는 **완전히 작동하는 SubTranslate MVP + 전문적인 UI/UX**가 완성되었습니다! 모든 핵심 기능이 end-to-end로 연결되어 있으며, 홈페이지, 로그인, 대시보드, 메인 콘텐츠, 프로젝트 상세페이지까지 일관된 디자인 시스템으로 실제 서비스 수준의 사용자 경험을 제공합니다.
+
+### ✅ **프로젝트 상세페이지 UI/UX 완성** (2025-06-30 최종 완료)
+- **사용자 피드백 반영**: "숏폼 비디오 대응" + "자막-원본 대본 coupling" 요구사항 완전 구현
+- **모든 비디오 해상도 대응**: 세로형, 가로형, 정사각형 영상 모두 적절한 화면 배치
+- **통합된 텍스트 인터페이스**: 번역 자막과 원본 대본을 탭으로 전환하며 비교 가능
+- **완전한 UI/UX 일관성**: 전체 애플리케이션 디자인 시스템 통일 완료
 
 ## ✅ 모든 MVP 차단 이슈 해결 완료 (2025-06-30)
 
@@ -109,6 +115,61 @@
      - 메모리 관리: Blob URL 자동 정리로 메모리 누수 방지
    - **결과**: 대시보드 로딩 속도 향상, 네트워크 대역폭 절약, 향상된 사용자 경험
 
+8. **원본 대본 타임라인 기능 부재** ✅ **해결됨** (2025-06-30)
+   - **문제**: 프로젝트 상세 페이지에서 원본 대본에 타임라인 클릭 기능이 없어 일관된 사용자 경험 부족
+   - **원인**: 업로드 완료 화면과 프로젝트 상세 페이지에서 서로 다른 UI 컴포넌트 사용
+   - **해결**:
+     - `UnifiedSubtitleViewer.tsx` 컴포넌트 개발: 원본과 번역 텍스트를 통합 관리
+     - 세 가지 보기 모드: "원본 + 번역", "원본만", "번역만" 탭 제공
+     - 타임라인 클릭 기능: 모든 세그먼트에서 비디오 해당 시간으로 점프
+     - 데이터 구조 개선: `originalText` 필드 추가로 원본 텍스트 저장
+     - MainContent.tsx와 ProjectPageContent.tsx 모두 동일한 컴포넌트 사용
+   - **결과**: 원본 대본과 번역 자막 모두에서 타임라인 기능 지원, 완전한 UI/UX 일관성 달성
+
 ## 해결된 문제
 
 - **`projects` 테이블 RLS 위반 오류:** `new row violates row-level security policy` 오류는 `projects` 테이블이 존재하지 않았고, `INSERT` 및 `SELECT` RLS 정책이 `public` 역할로 잘못 설정되어 발생했습니다. 테이블 생성 및 `authenticated` 역할에 대한 정책을 올바르게 설정하여 해결되었습니다.
+
+## 기술적 구현 세부사항
+
+### 컴포넌트 아키텍처
+```
+src/components/
+├── MainContent.tsx           # 비디오 업로드 및 처리 플로우 with 통합 뷰어
+├── ProjectPageContent.tsx    # 프로젝트 상세 페이지 with 통합 뷰어
+├── UnifiedSubtitleViewer.tsx # 새로 추가: 타임라인 기능이 있는 통합 자막 표시
+├── VideoPlayer.tsx          # 자막 동기화 비디오 플레이어
+├── SubtitleEditor.tsx       # 자막 편집 인터페이스 (레거시)
+├── SubtitleExportButtons.tsx # SRT/VTT 다운로드 기능
+└── VideoThumbnail.tsx       # 썸네일 생성 시스템
+```
+
+### 최근 기술적 개선사항
+
+#### UnifiedSubtitleViewer 컴포넌트
+```typescript
+interface SubtitleSegment {
+  id: string;
+  startTime: number;
+  endTime: number;
+  text: string;          // 번역된 텍스트
+  originalText?: string; // 원본 전사 텍스트
+}
+```
+
+**주요 기능**:
+- 세 가지 보기 모드: "원본 + 번역", "원본만", "번역만"
+- 모든 세그먼트에서 클릭-점프 타임라인 기능
+- 기존 컴포넌트와 일관된 UI 디자인
+- 적절한 스크롤링이 있는 반응형 레이아웃
+
+#### 데이터 구조 개선
+- `originalText` 필드를 포함하도록 자막 세그먼트 강화
+- `generateUnifiedSubtitleSegments` 함수 업데이트
+- Whisper 세그먼트에서 통합 형식으로 향상된 매핑
+- 전사 → 번역 → 저장의 일관된 데이터 흐름
+
+#### 컴포넌트 통합
+- **MainContent.tsx**: 별도의 전사/자막 섹션을 UnifiedSubtitleViewer로 교체
+- **ProjectPageContent.tsx**: 기존 탭 시스템 제거, UnifiedSubtitleViewer 통합
+- **비디오 플레이어 통합**: refs를 통해 기존 `jumpToTime` 기능 유지

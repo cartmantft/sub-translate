@@ -1,21 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import FileUploader from '@/components/FileUploader';
-import VideoPlayer from '@/components/VideoPlayer';
-import SubtitleEditor from '@/components/SubtitleEditor';
-// Note: createClient import removed as it's not needed for API route calls
-import toast from 'react-hot-toast'; // Import toast
+import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer';
+import UnifiedSubtitleViewer from '@/components/UnifiedSubtitleViewer';
+import SubtitleExportButtons from '@/components/SubtitleExportButtons';
+import toast from 'react-hot-toast';
 
 interface SubtitleSegment {
   id: string;
   startTime: number;
   endTime: number;
   text: string;
+  originalText?: string;
 }
 
-// Helper function to generate subtitle segments using Whisper timestamps
-function generateSubtitleSegments(transcription: string, translation: string, whisperSegments?: any[]) {
+// Helper function to generate unified subtitle segments with both original and translated text
+function generateUnifiedSubtitleSegments(transcription: string, translation: string, whisperSegments?: any[]) {
   // If we have Whisper segments with timestamps, use them
   if (whisperSegments && whisperSegments.length > 0) {
     const translatedSentences = translation.split(/[.!?]+/).filter(s => s.trim().length > 0);
@@ -25,6 +26,7 @@ function generateSubtitleSegments(transcription: string, translation: string, wh
       startTime: segment.start,
       endTime: segment.end,
       text: translatedSentences[index]?.trim() || segment.text?.trim() || '',
+      originalText: segment.text?.trim() || '',
     }));
   }
   
@@ -46,6 +48,7 @@ function generateSubtitleSegments(transcription: string, translation: string, wh
       startTime,
       endTime,
       text: translatedSentences[i]?.trim() || sentences[i]?.trim() || '',
+      originalText: sentences[i]?.trim() || '',
     });
   }
   
@@ -53,9 +56,10 @@ function generateSubtitleSegments(transcription: string, translation: string, wh
 }
 
 export default function MainContent() {
+  const videoPlayerRef = useRef<VideoPlayerRef>(null);
   const [videoSrc, setVideoSrc] = useState('');
   const [transcription, setTranscription] = useState('');
-  const [subtitles, setSubtitles] = useState<SubtitleSegment[]>([]); // To store parsed subtitles
+  const [subtitles, setSubtitles] = useState<SubtitleSegment[]>([]); // To store unified segments
   const [projectId, setProjectId] = useState<string | null>(null); // To store the ID of the created project
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,12 +117,13 @@ export default function MainContent() {
           throw new Error(translateResult.error || 'Failed to translate segments');
         }
 
-        // Convert translated segments to subtitle format
+        // Convert translated segments to unified subtitle format with original text
         subtitleSegments = translateResult.translatedSegments.map((segment: any, index: number) => ({
           id: `${index + 1}`,
           startTime: segment.start,
           endTime: segment.end,
           text: segment.translatedText || segment.text || '',
+          originalText: whisperSegments[index]?.text || '',
         }));
       } else {
         // Fallback: translate entire text for backward compatibility
@@ -140,7 +145,7 @@ export default function MainContent() {
         }
 
         const translatedText = translateResult.translation;
-        subtitleSegments = generateSubtitleSegments(transcriptionText, translatedText, whisperSegments);
+        subtitleSegments = generateUnifiedSubtitleSegments(transcriptionText, translatedText, whisperSegments);
       }
 
       toast.success('Translation complete! Generating subtitles...', { id: loadingToastId });
@@ -156,6 +161,7 @@ export default function MainContent() {
           videoUrl: url,
           transcription: transcriptionText,
           subtitles: subtitleSegments,
+          originalSegments: whisperSegments || [],
           title: `Video Project - ${new Date().toLocaleDateString()}`,
         }),
       });
@@ -172,10 +178,16 @@ export default function MainContent() {
     } catch (err) {
       console.error('Error processing video:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(errorMessage);
-      toast.error(`Failed to process video: ${errorMessage}`, { id: loadingToastId });
+      setError(`비디오 처리 중 오류가 발생했습니다: ${errorMessage}`);
+      toast.error(`비디오 처리 실패: ${errorMessage}`, { id: loadingToastId });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubtitleClick = (startTime: number) => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.jumpToTime(startTime);
     }
   };
 
@@ -260,7 +272,7 @@ export default function MainContent() {
               <h2 className="text-xl font-semibold text-white text-center">업로드된 비디오</h2>
             </div>
             <div className="p-6">
-              <VideoPlayer src={videoSrc} />
+              <VideoPlayer ref={videoPlayerRef} src={videoSrc} />
             </div>
           </div>
 
@@ -281,28 +293,29 @@ export default function MainContent() {
             </div>
           )}
 
-          {transcription && !loading && (
+          {transcription && subtitles.length > 0 && !loading && (
             <div className="space-y-8">
-              {/* Transcription Section */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-4">
-                  <h2 className="text-xl font-semibold text-white text-center">원본 음성 인식 결과</h2>
-                </div>
-                <div className="p-6">
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{transcription}</p>
-                  </div>
-                </div>
-              </div>
+              {/* Unified Subtitle Viewer */}
+              <UnifiedSubtitleViewer 
+                segments={subtitles}
+                onSegmentClick={handleSubtitleClick}
+                showOriginal={true}
+              />
 
-              {/* Subtitle Editor Section */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-gradient-to-r from-green-600 to-teal-600 px-8 py-4">
-                  <h2 className="text-xl font-semibold text-white text-center">번역된 자막 편집기</h2>
+              {/* Download Section */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-800">자막 다운로드</h2>
                 </div>
-                <div className="p-6">
-                  <SubtitleEditor initialSubtitles={subtitles} onSubtitlesChange={handleSubtitlesChange} />
-                </div>
+                <SubtitleExportButtons 
+                  subtitles={subtitles} 
+                  projectTitle={`Video Project - ${new Date().toLocaleDateString()}`} 
+                />
               </div>
               
               {projectId && (
