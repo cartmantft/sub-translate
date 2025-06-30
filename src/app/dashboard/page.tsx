@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import VideoThumbnail from '@/components/VideoThumbnail';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -58,8 +59,12 @@ export default async function DashboardPage() {
                 Created: {new Date(project.created_at).toLocaleDateString()}
               </p>
               {project.video_url && (
-                <div className="mb-4 flex-grow flex items-center justify-center">
-                  <video src={project.video_url} controls className="w-full h-auto rounded-md object-cover" />
+                <div className="mb-4 flex-grow">
+                  <VideoThumbnail
+                    videoUrl={project.video_url}
+                    alt={`Thumbnail for ${project.title || 'Untitled Project'}`}
+                    className="w-full h-48 rounded-md"
+                  />
                 </div>
               )}
               <div className="mt-auto">
