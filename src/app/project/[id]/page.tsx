@@ -4,6 +4,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import VideoPlayer from '@/components/VideoPlayer';
 import SubtitleEditor from '@/components/SubtitleEditor';
+import SubtitleExportButtons from '@/components/SubtitleExportButtons';
 
 interface SubtitleSegment {
   id: string;
@@ -149,24 +150,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             )}
           </div>
 
-          {/* Export Options (placeholder for future implementation) */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-800 mb-3">Export Options</h3>
-            <div className="space-y-2">
-              <button 
-                className="w-full px-4 py-2 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed"
-                disabled
-              >
-                Download SRT (Coming Soon)
-              </button>
-              <button 
-                className="w-full px-4 py-2 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed"
-                disabled
-              >
-                Download VTT (Coming Soon)
-              </button>
-            </div>
-          </div>
+          {/* Export Options */}
+          <SubtitleExportButtons 
+            subtitles={parsedSubtitles} 
+            projectTitle={project.title || 'Untitled Project'} 
+          />
         </div>
       </div>
 
