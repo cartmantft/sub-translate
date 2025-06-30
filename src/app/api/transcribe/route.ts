@@ -19,11 +19,14 @@ export async function POST(request: Request) {
     const transcription = await openai.audio.transcriptions.create({
       file,
       model: 'whisper-1',
+      response_format: 'verbose_json',
+      timestamp_granularities: ['segment']
     });
 
     return NextResponse.json({
       success: true,
       transcription: transcription.text,
+      segments: transcription.segments || []
     }, { status: 200 }); // Explicitly set status to 200 for success
   } catch (error) {
     console.error('Error in transcribe route:', error);

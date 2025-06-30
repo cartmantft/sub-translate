@@ -1,42 +1,79 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY as string);
-
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { text, targetLanguage } = await request.json();
+    const body = await request.json();
+    const { segments, text, targetLanguage } = body;
 
-    if (!text || !targetLanguage) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Text and target language are required.',
-        },
-        { status: 400 }
-      );
+    // Handle both single text and segments array for backward compatibility
+    let segmentsToTranslate;
+    if (segments && Array.isArray(segments)) {
+      segmentsToTranslate = segments;
+    } else if (text) {
+      // Convert single text to segments format
+      segmentsToTranslate = [{ text, start: 0, end: 0 }];
+    } else {
+      return NextResponse.json({ error: 'Either segments array or text string is required' }, { status: 400 });
     }
 
-    // Temporary dummy translation for testing
-    console.log(`Translating to ${targetLanguage}:`, text);
-    
-    // Simple mock translation
-    const translation = `[Translated to ${targetLanguage}] ${text}`;
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      console.error('Google API key not found');
+      return NextResponse.json({ error: 'Google API key not configured' }, { status: 500 });
+    }
 
-    return NextResponse.json({
-      success: true,
-      translation,
-    }, { status: 200 });
+    // Initialize Google Gemini AI
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    // Translate segments using Google Gemini
+    const translatedSegments = await Promise.all(
+      segmentsToTranslate.map(async (segment: any) => {
+        try {
+          const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, no explanations or additional content:
+
+"${segment.text}"`;
+
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          const translatedText = response.text().trim();
+
+          return {
+            ...segment,
+            translatedText: translatedText
+          };
+        } catch (error) {
+          console.error(`Translation error for segment: ${segment.text}`, error);
+          // Fallback to original text if translation fails
+          return {
+            ...segment,
+            translatedText: segment.text
+          };
+        }
+      })
+    );
+
+    // Return appropriate format based on input
+    if (text && !segments) {
+      // Single text translation - return simple format for backward compatibility
+      return NextResponse.json({
+        success: true,
+        translation: translatedSegments[0]?.translatedText || text,
+        message: 'Translation completed successfully'
+      });
+    } else {
+      // Segments translation - return full segments array
+      return NextResponse.json({ 
+        translatedSegments,
+        message: 'Translation completed successfully' 
+      });
+    }
+
   } catch (error) {
-    console.error('Error in translate route:', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Translation API error:', error);
     return NextResponse.json(
-      {
-        success: false,
-        error: 'An error occurred during translation.',
-        details: errorMessage,
-      },
+      { error: 'Translation failed' }, 
       { status: 500 }
     );
   }

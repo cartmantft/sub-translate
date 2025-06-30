@@ -14,15 +14,27 @@ interface SubtitleSegment {
   text: string;
 }
 
-// Helper function to generate subtitle segments with timing
-function generateSubtitleSegments(transcription: string, translation: string) {
-  // Split text into sentences for better subtitle segments
+// Helper function to generate subtitle segments using Whisper timestamps
+function generateSubtitleSegments(transcription: string, translation: string, whisperSegments?: any[]) {
+  // If we have Whisper segments with timestamps, use them
+  if (whisperSegments && whisperSegments.length > 0) {
+    const translatedSentences = translation.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    
+    return whisperSegments.map((segment, index) => ({
+      id: `${index + 1}`,
+      startTime: segment.start,
+      endTime: segment.end,
+      text: translatedSentences[index]?.trim() || segment.text?.trim() || '',
+    }));
+  }
+  
+  // Fallback: Split text into sentences for better subtitle segments
   const sentences = transcription.split(/[.!?]+/).filter(s => s.trim().length > 0);
   const translatedSentences = translation.split(/[.!?]+/).filter(s => s.trim().length > 0);
   
   // Ensure we have matching number of segments (fallback if translation has different sentence count)
   const segmentCount = Math.min(sentences.length, translatedSentences.length);
-  const averageSegmentDuration = 4; // seconds per segment (can be adjusted)
+  const averageSegmentDuration = 4; // seconds per segment (fallback only)
   
   const segments = [];
   for (let i = 0; i < segmentCount; i++) {
@@ -75,6 +87,7 @@ export default function MainContent() {
       }
 
       const transcriptionText = transcribeResult.transcription;
+      const whisperSegments = transcribeResult.segments;
       setTranscription(transcriptionText);
       toast.success('Transcription complete! Now translating...', { id: loadingToastId });
 
@@ -98,8 +111,8 @@ export default function MainContent() {
       const translatedText = translateResult.translation;
       toast.success('Translation complete! Generating subtitles...', { id: loadingToastId });
 
-      // Step 4: Generate subtitle segments with timing
-      const subtitleSegments = generateSubtitleSegments(transcriptionText, translatedText);
+      // Step 4: Generate subtitle segments with timing using Whisper timestamps
+      const subtitleSegments = generateSubtitleSegments(transcriptionText, translatedText, whisperSegments);
       setSubtitles(subtitleSegments);
 
       // Step 5: Save the project to the database via API route
@@ -186,6 +199,20 @@ export default function MainContent() {
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <p className="text-green-800 font-medium">Project saved successfully!</p>
                   <p className="text-green-600 text-sm">Project ID: {projectId}</p>
+                  <div className="mt-3 flex gap-3">
+                    <a 
+                      href={`/project/${projectId}`}
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      View Project
+                    </a>
+                    <a 
+                      href="/dashboard"
+                      className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      Go to Dashboard
+                    </a>
+                  </div>
                 </div>
               )}
             </div>
