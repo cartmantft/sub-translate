@@ -23,6 +23,24 @@ export async function POST(request: Request) {
       timestamp_granularities: ['segment']
     });
 
+    console.log('=== Whisper Transcription Results ===');
+    console.log('Total transcription length:', transcription.text?.length || 0);
+    console.log('Number of segments:', transcription.segments?.length || 0);
+    
+    // Log segments after 25 seconds to debug language consistency issue
+    if (transcription.segments) {
+      const segmentsAfter25s = transcription.segments.filter(segment => segment.start > 25);
+      console.log(`Segments after 25 seconds: ${segmentsAfter25s.length}`);
+      
+      segmentsAfter25s.slice(0, 3).forEach((segment, idx) => {
+        console.log(`Late segment ${idx}:`, {
+          start: segment.start,
+          end: segment.end,
+          text: segment.text?.substring(0, 100) || 'No text'
+        });
+      });
+    }
+
     return NextResponse.json({
       success: true,
       transcription: transcription.text,

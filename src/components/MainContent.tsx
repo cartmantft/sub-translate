@@ -91,28 +91,59 @@ export default function MainContent() {
       setTranscription(transcriptionText);
       toast.success('Transcription complete! Now translating...', { id: loadingToastId });
 
-      // Step 3: Call translation API (default to Korean for now)
-      const translateResponse = await fetch('/api/translate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: transcriptionText,
-          targetLanguage: 'Korean',
-        }),
-      });
+      // Step 3: Call translation API with segments for better accuracy
+      let subtitleSegments;
+      
+      if (whisperSegments && whisperSegments.length > 0) {
+        // Translate each Whisper segment individually for better accuracy
+        console.log('Translating individual segments...');
+        const translateResponse = await fetch('/api/translate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            segments: whisperSegments,
+            targetLanguage: 'Korean',
+          }),
+        });
 
-      const translateResult = await translateResponse.json();
-      if (!translateResponse.ok) {
-        throw new Error(translateResult.error || 'Failed to translate text');
+        const translateResult = await translateResponse.json();
+        if (!translateResponse.ok) {
+          throw new Error(translateResult.error || 'Failed to translate segments');
+        }
+
+        // Convert translated segments to subtitle format
+        subtitleSegments = translateResult.translatedSegments.map((segment: any, index: number) => ({
+          id: `${index + 1}`,
+          startTime: segment.start,
+          endTime: segment.end,
+          text: segment.translatedText || segment.text || '',
+        }));
+      } else {
+        // Fallback: translate entire text for backward compatibility
+        console.log('Translating entire text as fallback...');
+        const translateResponse = await fetch('/api/translate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: transcriptionText,
+            targetLanguage: 'Korean',
+          }),
+        });
+
+        const translateResult = await translateResponse.json();
+        if (!translateResponse.ok) {
+          throw new Error(translateResult.error || 'Failed to translate text');
+        }
+
+        const translatedText = translateResult.translation;
+        subtitleSegments = generateSubtitleSegments(transcriptionText, translatedText, whisperSegments);
       }
 
-      const translatedText = translateResult.translation;
       toast.success('Translation complete! Generating subtitles...', { id: loadingToastId });
-
-      // Step 4: Generate subtitle segments with timing using Whisper timestamps
-      const subtitleSegments = generateSubtitleSegments(transcriptionText, translatedText, whisperSegments);
       setSubtitles(subtitleSegments);
 
       // Step 5: Save the project to the database via API route

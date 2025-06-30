@@ -31,13 +31,24 @@ export async function POST(request: NextRequest) {
     const translatedSegments = await Promise.all(
       segmentsToTranslate.map(async (segment: any) => {
         try {
-          const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, no explanations or additional content:
+          let prompt;
+          if (targetLanguage.toLowerCase() === 'korean') {
+            prompt = `다음 텍스트를 한국어로 번역해주세요. 번역된 한국어 텍스트만 반환하고, 영어나 다른 언어는 포함하지 마세요. 설명이나 추가 내용 없이 번역문만 제공해주세요:
 
 "${segment.text}"`;
+          } else {
+            prompt = `Translate the following text to ${targetLanguage}. Only return the translated text in ${targetLanguage}, no explanations or additional content:
 
+"${segment.text}"`;
+          }
+
+          console.log(`Translating segment: "${segment.text.substring(0, 50)}..." (${segment.start}s-${segment.end}s)`);
+          
           const result = await model.generateContent(prompt);
           const response = await result.response;
           const translatedText = response.text().trim();
+          
+          console.log(`Translation result: "${translatedText.substring(0, 50)}..."`);
 
           return {
             ...segment,
