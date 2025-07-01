@@ -138,7 +138,7 @@ export default function Navigation() {
               </div>
               <button 
                 onClick={handleSignOut}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm font-medium"
+                className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
               >
                 로그아웃
               </button>
@@ -148,7 +148,7 @@ export default function Navigation() {
               {pathname !== '/login' && (
                 <Link 
                   href="/login" 
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-sm font-medium"
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                 >
                   로그인
                 </Link>

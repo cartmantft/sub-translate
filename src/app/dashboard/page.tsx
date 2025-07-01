@@ -199,7 +199,7 @@ export default async function DashboardPage() {
 
                   {/* Action Button */}
                   <Link href={`/project/${project.id}`}>
-                    <button className="w-full px-4 py-3 bg-gray-50 text-gray-700 font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group-hover:bg-blue-600 group-hover:text-white">
+                    <button className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
                       프로젝트 보기
                     </button>
                   </Link>
@@ -213,7 +213,7 @@ export default async function DashboardPage() {
         {projects.length > 0 && (
           <div className="mt-12 text-center">
             <Link href="/">
-              <button className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 font-medium rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+              <button className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl shadow-sm border-2 border-gray-200 hover:border-blue-600 hover:text-blue-600 hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
