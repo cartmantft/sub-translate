@@ -126,8 +126,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Generate thumbnail URL
-    const thumbnailUrl = await generateThumbnail(videoUrl, supabase);
+    // Generate thumbnail URL - temporarily disabled to fix server error
+    const thumbnailUrl = null; // await generateThumbnail(videoUrl, supabase);
 
     const { data, error } = await supabase.from('projects').insert([
       {
