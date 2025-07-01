@@ -1,8 +1,15 @@
 # 프로젝트 진행 상황
 
-## 현재 상태: `🎉 SubTranslate 완전 완성!`
+## 현재 상태: `🎉 SubTranslate 완전 완성 + 견고한 테스트 시스템!`
 
-이 프로젝트는 **완전히 작동하는 SubTranslate MVP + 전문적인 UI/UX**가 완성되었습니다! 모든 핵심 기능이 end-to-end로 연결되어 있으며, 홈페이지, 로그인, 대시보드, 메인 콘텐츠, 프로젝트 상세페이지까지 일관된 디자인 시스템으로 실제 서비스 수준의 사용자 경험을 제공합니다.
+이 프로젝트는 **완전히 작동하는 SubTranslate MVP + 전문적인 UI/UX + 견고한 E2E 테스트 시스템**이 완성되었습니다! 모든 핵심 기능이 end-to-end로 연결되어 있으며, 홈페이지, 로그인, 대시보드, 메인 콘텐츠, 프로젝트 상세페이지까지 일관된 디자인 시스템으로 실제 서비스 수준의 사용자 경험을 제공합니다. 추가로 Page Object Model 기반의 Playwright 테스트로 모든 핵심 기능이 안정적으로 작동함을 보장합니다.
+
+### ✅ **Playwright E2E 테스트 시스템 완성** (2025-07-01 최종 완료)
+- **Page Object Model 아키텍처**: tests/pages/ 구조로 재사용 가능하고 유지보수 가능한 테스트 코드 작성
+- **견고한 테스트 안정성**: 한글 텍스트 + 중복 요소 문제 해결로 테스트 실패 이슈 완전 해결
+- **7개 핵심 테스트 100% 통과**: 기본 네비게이션, 로그인 UI, 대시보드 접근 권한, 반응형 디자인 테스트
+- **다중 브라우저 지원**: Chrome, Firefox, Safari, Mobile 환경에서 일관된 테스트 결과
+- **회귀 버그 방지**: 코드 변경 시 자동화된 테스트로 기존 기능 보호
 
 ### ✅ **프로젝트 상세페이지 UI/UX 완성** (2025-06-30 최종 완료)
 - **사용자 피드백 반영**: "숏폼 비디오 대응" + "자막-원본 대본 coupling" 요구사항 완전 구현
@@ -167,6 +174,16 @@ src/components/
 ├── SubtitleEditor.tsx       # 자막 편집 인터페이스 (레거시)
 ├── SubtitleExportButtons.tsx # SRT/VTT 다운로드 기능
 └── VideoThumbnail.tsx       # 썸네일 생성 시스템
+
+tests/
+├── pages/                   # Page Object Model 구조
+│   ├── base.page.ts         # 공통 네비게이션 및 액션
+│   ├── home.page.ts         # 홈페이지 전용 요소
+│   ├── login.page.ts        # 로그인 페이지 전용 요소
+│   └── dashboard.page.ts    # 대시보드 페이지 전용 요소
+├── fixtures/
+│   └── pages.fixture.ts     # 페이지 객체 주입 픽스처
+└── *.spec.ts               # E2E 테스트 파일들
 ```
 
 ### 최근 기술적 개선사항

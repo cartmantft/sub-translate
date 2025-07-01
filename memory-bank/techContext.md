@@ -28,3 +28,12 @@
 ## 패키지 관리자
 
 - **Manager:** npm
+
+## 테스트 프레임워크
+
+- **E2E Testing:** Playwright
+  - **아키텍처:** Page Object Model 패턴
+  - **브라우저 지원:** Chromium, Firefox, WebKit (Safari)
+  - **모바일 테스트:** Mobile Chrome, Mobile Safari
+  - **리포트:** HTML 리포트 (tests/playwright-report/)
+  - **픽스처:** TypeScript 기반 테스트 픽스처 시스템
