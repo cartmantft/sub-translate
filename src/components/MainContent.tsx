@@ -5,6 +5,7 @@ import FileUploader from '@/components/FileUploader';
 import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer';
 import UnifiedSubtitleViewer from '@/components/UnifiedSubtitleViewer';
 import SubtitleExportButtons from '@/components/SubtitleExportButtons';
+import StepIndicator, { ProcessStep } from '@/components/StepIndicator';
 import toast from 'react-hot-toast';
 
 interface SubtitleSegment {
@@ -63,12 +64,14 @@ export default function MainContent() {
   const [projectId, setProjectId] = useState<string | null>(null); // To store the ID of the created project
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<ProcessStep>('upload');
 
   const handleUploadSuccess = async (url: string) => {
     setVideoSrc(url);
     setError(null);
     setLoading(true);
-    const loadingToastId = toast.loading('Transcribing video...');
+    setCurrentStep('transcribe');
+    const loadingToastId = toast.loading('음성을 인식하고 있습니다...');
 
     try {
       // Step 1: Get the video file from the URL to send to transcription API
@@ -93,7 +96,8 @@ export default function MainContent() {
       const transcriptionText = transcribeResult.transcription;
       const whisperSegments = transcribeResult.segments;
       setTranscription(transcriptionText);
-      toast.success('Transcription complete! Now translating...', { id: loadingToastId });
+      setCurrentStep('translate');
+      toast.success('음성 인식 완료! 번역을 시작합니다...', { id: loadingToastId });
 
       // Step 3: Call translation API with segments for better accuracy
       let subtitleSegments;
@@ -148,8 +152,9 @@ export default function MainContent() {
         subtitleSegments = generateUnifiedSubtitleSegments(transcriptionText, translatedText, whisperSegments);
       }
 
-      toast.success('Translation complete! Generating subtitles...', { id: loadingToastId });
+      toast.success('번역 완료! 자막을 생성하고 있습니다...', { id: loadingToastId });
       setSubtitles(subtitleSegments);
+      setCurrentStep('complete');
 
       // Step 5: Save the project to the database via API route
       const response = await fetch('/api/projects', {
@@ -171,7 +176,7 @@ export default function MainContent() {
         throw new Error(result.error || 'Failed to save project via API');
       }
 
-      toast.success('Project saved successfully!', { id: loadingToastId });
+      toast.success('프로젝트가 성공적으로 저장되었습니다!', { id: loadingToastId });
       setProjectId(result.projectId);
       console.log('Project saved with ID:', result.projectId);
 
@@ -182,6 +187,9 @@ export default function MainContent() {
       toast.error(`비디오 처리 실패: ${errorMessage}`, { id: loadingToastId });
     } finally {
       setLoading(false);
+      if (!subtitles.length) {
+        setCurrentStep('upload');
+      }
     }
   };
 
@@ -223,36 +231,36 @@ export default function MainContent() {
             <FileUploader onUploadSuccess={handleUploadSuccess} />
           </div>
           
-          {/* Process Steps */}
+          {/* Process Steps with Interactive Indicator */}
           <div className="border-t border-gray-100 px-8 py-6 bg-gray-50">
-            <h3 className="text-sm font-medium text-gray-700 mb-4 text-center">처리 과정</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-2">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <h3 className="text-sm font-medium text-gray-700 mb-6 text-center">SubTranslate가 제공하는 3단계 자동 처리</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="group text-center transform transition-all duration-300 hover:scale-105">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:shadow-lg transition-shadow">
+                  <svg className="w-7 h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                   </svg>
                 </div>
-                <p className="text-sm font-medium text-gray-700">1. 음성 인식</p>
-                <p className="text-xs text-gray-500">OpenAI Whisper로 정확한 텍스트 추출</p>
+                <h4 className="text-base font-semibold text-gray-800 mb-1">1. 음성 인식</h4>
+                <p className="text-sm text-gray-600">OpenAI Whisper로<br/>정확한 텍스트 추출</p>
               </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-2">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="group text-center transform transition-all duration-300 hover:scale-105">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:shadow-lg transition-shadow">
+                  <svg className="w-7 h-7 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                   </svg>
                 </div>
-                <p className="text-sm font-medium text-gray-700">2. 언어 번역</p>
-                <p className="text-xs text-gray-500">Google Gemini로 자연스러운 번역</p>
+                <h4 className="text-base font-semibold text-gray-800 mb-1">2. 언어 번역</h4>
+                <p className="text-sm text-gray-600">Google Gemini로<br/>자연스러운 번역</p>
               </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-2">
-                  <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="group text-center transform transition-all duration-300 hover:scale-105">
+                <div className="w-14 h-14 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:shadow-lg transition-shadow">
+                  <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <p className="text-sm font-medium text-gray-700">3. 파일 생성</p>
-                <p className="text-xs text-gray-500">SRT/VTT 형식으로 다운로드 가능</p>
+                <h4 className="text-base font-semibold text-gray-800 mb-1">3. 파일 생성</h4>
+                <p className="text-sm text-gray-600">SRT/VTT 형식으로<br/>다운로드 가능</p>
               </div>
             </div>
           </div>
@@ -272,18 +280,18 @@ export default function MainContent() {
           </div>
 
           {loading && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+              <StepIndicator currentStep={currentStep} className="mb-8" />
               <div className="text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-6">
                   <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">AI가 비디오를 처리하고 있습니다</h3>
-                <p className="text-gray-600 mb-4">음성 인식과 번역 작업이 진행 중입니다. 잠시만 기다려주세요.</p>
-                <div className="max-w-md mx-auto">
-                  <div className="bg-gray-200 rounded-full h-2">
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full animate-pulse" style={{width: '60%'}}></div>
-                  </div>
-                </div>
+                <p className="text-gray-600">
+                  {currentStep === 'transcribe' && '음성을 텍스트로 변환하고 있습니다...'}
+                  {currentStep === 'translate' && '텍스트를 한국어로 번역하고 있습니다...'}
+                  {currentStep === 'complete' && '자막 생성을 마무리하고 있습니다...'}
+                </p>
               </div>
             </div>
           )}
@@ -297,15 +305,16 @@ export default function MainContent() {
                 showOriginal={true}
               />
 
-              {/* Download Section */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {/* Enhanced Download Section */}
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-8 shadow-sm border border-indigo-100">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg mb-4">
+                    <svg className="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-800">자막 다운로드</h2>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">자막이 준비되었습니다!</h2>
+                  <p className="text-gray-600">원하는 형식으로 자막 파일을 다운로드하세요</p>
                 </div>
                 <SubtitleExportButtons 
                   subtitles={subtitles} 
