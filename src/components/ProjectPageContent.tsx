@@ -102,9 +102,15 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-sm font-medium text-green-600">완료됨</span>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-green-600">완료됨</span>
+                </div>
+                <SubtitleExportButtons 
+                  subtitles={parsedSubtitles} 
+                  projectTitle={project.title || '제목 없는 프로젝트'} 
+                />
               </div>
             </div>
           </div>
@@ -153,21 +159,6 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
           />
         </div>
 
-        {/* Download Section */}
-        <div className="mt-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-800">자막 다운로드</h2>
-          </div>
-          <SubtitleExportButtons 
-            subtitles={parsedSubtitles} 
-            projectTitle={project.title || '제목 없는 프로젝트'} 
-          />
-        </div>
 
         {/* Project Statistics */}
         <div className="mt-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
