@@ -53,17 +53,6 @@ export default async function Home() {
             <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
               AI를 활용하여 비디오에서 자막을 자동으로 추출하고 다양한 언어로 번역하는 스마트한 솔루션
             </p>
-            <div className="mt-6">
-              <div className="text-sm text-gray-600">
-                안녕하세요, <span className="font-medium text-gray-800">{user.email?.split('@')[0]}</span>님! 
-                <Link href="/dashboard" className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium ml-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  대시보드에서 프로젝트 관리하기
-                </Link>
-              </div>
-            </div>
           </div>
 
           {/* Features Grid with Enhanced Animations */}
