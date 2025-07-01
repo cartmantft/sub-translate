@@ -12,7 +12,6 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
   const supabase = createClient();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,29 +77,14 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     }
 
     setUploading(true);
-    setUploadProgress(0);
     const loadingToastId = toast.loading('파일 업로드 중...');
 
     try {
       const fileName = `${Date.now()}_${file.name}`;
       
-      // Simulate upload progress (since Supabase doesn't provide real progress)
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
       const { error } = await supabase.storage
         .from('videos')
         .upload(fileName, file);
-
-      clearInterval(progressInterval);
-      setUploadProgress(100);
 
       if (error) {
         throw error;
@@ -125,7 +109,6 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       toast.error(`파일 업로드 오류: ${errorMessage}`, { id: loadingToastId });
     } finally {
       setUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -206,14 +189,8 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
               <div className="mb-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
               </div>
-              <p className="text-sm font-medium text-gray-700 mb-2">업로드 중...</p>
-              <div className="w-48 bg-gray-200 rounded-full h-2 mx-auto">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">{uploadProgress}%</p>
+              <p className="text-sm font-medium text-gray-700">업로드 중...</p>
+              <p className="text-xs text-gray-500 mt-1">잠시만 기다려주세요</p>
             </div>
           </div>
         )}
