@@ -73,7 +73,7 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
 
       {subtitles.length === 0 && (
         <p className="text-gray-500 italic text-center py-4">
-          No subtitles to display. Click "Add New Segment" to start.
+          No subtitles to display. Click &quot;Add New Segment&quot; to start.
         </p>
       )}
 

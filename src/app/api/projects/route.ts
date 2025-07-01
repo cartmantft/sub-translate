@@ -1,9 +1,123 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { execSync } from 'child_process';
+import fs from 'fs';
+import crypto from 'crypto';
+
+// Thumbnail generation function - server-side implementation with ffmpeg
+async function generateThumbnail(videoUrl: string, supabase: Awaited<ReturnType<typeof createClient>>): Promise<string | null> {
+  try {
+    
+    console.log('Server-side thumbnail generation for:', videoUrl);
+    
+    // Create unique filename for thumbnail
+    const timestamp = Date.now();
+    const randomId = crypto.randomBytes(8).toString('hex');
+    const thumbnailFileName = `thumbnail_${timestamp}_${randomId}.jpg`;
+    const tempThumbnailPath = `/tmp/${thumbnailFileName}`;
+    const tempVideoPath = `/tmp/video_${timestamp}_${randomId}.mp4`;
+    const storageThumbnailName = `thumbnails/${thumbnailFileName}`;
+    
+    try {
+      // Use ffmpeg to extract frame at 1 second (or 5% of video duration)
+      console.log('Extracting thumbnail with ffmpeg...');
+      
+      // Download video file first to avoid CORS/network issues
+      console.log('Downloading video file first...');
+      const response = await fetch(videoUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to download video: ${response.status}`);
+      }
+      
+      const videoBuffer = await response.arrayBuffer();
+      fs.writeFileSync(tempVideoPath, Buffer.from(videoBuffer));
+      
+      const ffmpegCommand = `ffmpeg -i "${tempVideoPath}" -vf "thumbnail,scale=320:240" -frames:v 1 -update 1 -q:v 2 "${tempThumbnailPath}" -y`;
+      execSync(ffmpegCommand, { 
+        timeout: 30000, // 30 second timeout
+        stdio: 'pipe' 
+      });
+      
+      // Check if thumbnail was created
+      if (!fs.existsSync(tempThumbnailPath)) {
+        console.error('Thumbnail file was not created');
+        return null;
+      }
+      
+      console.log('Thumbnail extracted successfully, uploading to storage...');
+      
+      // Read the generated thumbnail file
+      const thumbnailBuffer = fs.readFileSync(tempThumbnailPath);
+      
+      // Upload thumbnail to Supabase Storage (same approach as videos)
+      console.log('Uploading thumbnail to Supabase Storage...');
+      
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('videos') // Use same bucket as videos
+        .upload(storageThumbnailName, thumbnailBuffer, {
+          contentType: 'image/jpeg',
+          cacheControl: '3600'
+        });
+      
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        // Clean up and return null on upload failure
+        try {
+          fs.unlinkSync(tempThumbnailPath);
+          fs.unlinkSync(tempVideoPath);
+        } catch (cleanupError) {
+          console.warn('Could not clean up temp files:', cleanupError);
+        }
+        return null;
+      }
+      
+      // Get public URL (same as videos)
+      const { data: publicUrlData } = supabase.storage
+        .from('videos')
+        .getPublicUrl(storageThumbnailName);
+      
+      const thumbnailUrl = publicUrlData.publicUrl;
+      console.log('Thumbnail uploaded successfully:', thumbnailUrl);
+      
+      // Clean up temporary files
+      try {
+        fs.unlinkSync(tempThumbnailPath);
+        fs.unlinkSync(tempVideoPath);
+      } catch (cleanupError) {
+        console.warn('Could not clean up temp files:', cleanupError);
+      }
+      
+      // Return public URL (same as videos)
+      return thumbnailUrl;
+      
+    } catch (ffmpegError) {
+      console.error('FFmpeg error:', ffmpegError);
+      
+      // Clean up temp files if they exist
+      try {
+        if (fs.existsSync(tempThumbnailPath)) {
+          fs.unlinkSync(tempThumbnailPath);
+        }
+        if (fs.existsSync(tempVideoPath)) {
+          fs.unlinkSync(tempVideoPath);
+        }
+      } catch (cleanupError) {
+        console.warn('Could not clean up temp files after error:', cleanupError);
+      }
+      
+      return null;
+    }
+    
+  } catch (error) {
+    console.error('Error in thumbnail generation:', error);
+    return null;
+  }
+}
 
 export async function POST(request: Request) {
   try {
-    const { videoUrl, transcription, subtitles, originalSegments, title } = await request.json();
+    const { videoUrl, transcription, subtitles, title } = await request.json();
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -12,10 +126,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Generate thumbnail URL
+    const thumbnailUrl = await generateThumbnail(videoUrl, supabase);
+
     const { data, error } = await supabase.from('projects').insert([
       {
         user_id: user.id,
         video_url: videoUrl,
+        thumbnail_url: thumbnailUrl, // base64 썸네일 활성화
         transcription: transcription,
         subtitles: subtitles,
         title: title,

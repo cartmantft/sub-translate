@@ -30,7 +30,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
 
     try {
       const fileName = `${Date.now()}_${file.name}`;
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('videos')
         .upload(fileName, file);
 
@@ -51,9 +51,10 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       if (onUploadSuccess) {
         onUploadSuccess(publicUrlData.publicUrl);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error uploading file:', error);
-      toast.error(`Error uploading file: ${error.message}`, { id: loadingToastId });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Error uploading file: ${errorMessage}`, { id: loadingToastId });
     } finally {
       setUploading(false);
     }

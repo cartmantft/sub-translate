@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Translate segments using Google Gemini
     const translatedSegments = await Promise.all(
-      segmentsToTranslate.map(async (segment: any) => {
+      segmentsToTranslate.map(async (segment: { text: string; start: number; end: number }) => {
         try {
           let prompt;
           if (targetLanguage.toLowerCase() === 'korean') {

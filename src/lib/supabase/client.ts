@@ -25,7 +25,7 @@ export function createClient() {
           if (typeof window === 'undefined') return
           document.cookie = `${key}=${encodeURIComponent(value)}; path=/; ${options?.maxAge ? `max-age=${options.maxAge};` : ''} ${options?.httpOnly ? 'httponly;' : ''} ${options?.secure ? 'secure;' : ''} ${options?.sameSite ? `samesite=${options.sameSite}` : ''}`
         },
-        remove(key, options) {
+        remove(key) {
           if (typeof window === 'undefined') return
           document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
         },

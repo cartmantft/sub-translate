@@ -18,9 +18,6 @@ export async function middleware(request: NextRequest) {
     return response
   }
   
-  // 개발 환경에서는 홈페이지도 인증 확인 (자동 로그인 방지)
-  const isHomePage = path === '/'
-  const isDevelopment = process.env.NODE_ENV === 'development'
 
   // Only check auth for protected routes
   const protectedRoutes = ['/dashboard', '/projects']

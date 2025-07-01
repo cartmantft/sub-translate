@@ -1,10 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
 import { redirect, notFound } from 'next/navigation';
-import Link from 'next/link';
-import VideoPlayer from '@/components/VideoPlayer';
-import SubtitleEditor from '@/components/SubtitleEditor';
-import SubtitleExportButtons from '@/components/SubtitleExportButtons';
 import ProjectPageContent from '@/components/ProjectPageContent';
 
 interface SubtitleSegment {
@@ -14,15 +9,6 @@ interface SubtitleSegment {
   text: string;
 }
 
-interface Project {
-  id: string;
-  user_id: string;
-  video_url: string;
-  transcription: string;
-  subtitles: SubtitleSegment[];
-  title: string;
-  created_at: string;
-}
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

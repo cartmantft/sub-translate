@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import Link from 'next/link';
 import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer';
 import UnifiedSubtitleViewer from '@/components/UnifiedSubtitleViewer';
@@ -20,7 +20,7 @@ interface Project {
   video_url: string;
   transcription: string;
   subtitles: SubtitleSegment[];
-  original_segments?: any[];
+  original_segments?: { start: number; end: number; text: string }[];
   title: string;
   created_at: string;
 }

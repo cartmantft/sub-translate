@@ -7,7 +7,7 @@ export default function NotFound() {
         <h1 className="text-6xl font-bold text-gray-300 mb-4">404</h1>
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Project Not Found</h2>
         <p className="text-gray-600 mb-8 max-w-md">
-          The project you're looking for doesn't exist or you don't have permission to access it.
+          The project you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to access it.
         </p>
         
         <div className="space-y-4">

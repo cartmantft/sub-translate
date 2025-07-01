@@ -1,7 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
 import MainContent from '@/components/MainContent';
 
 export default async function Home() {
@@ -35,12 +33,6 @@ export default async function Home() {
     user = null;
   }
 
-  const signOut = async () => {
-    'use server';
-    const supabase = await createClient();
-    await supabase.auth.signOut();
-    return redirect('/login');
-  };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">

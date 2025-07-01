@@ -16,7 +16,7 @@ interface SubtitleSegment {
 }
 
 // Helper function to generate unified subtitle segments with both original and translated text
-function generateUnifiedSubtitleSegments(transcription: string, translation: string, whisperSegments?: any[]) {
+function generateUnifiedSubtitleSegments(transcription: string, translation: string, whisperSegments?: { start: number; end: number; text: string }[]): SubtitleSegment[] {
   // If we have Whisper segments with timestamps, use them
   if (whisperSegments && whisperSegments.length > 0) {
     const translatedSentences = translation.split(/[.!?]+/).filter(s => s.trim().length > 0);
@@ -118,7 +118,7 @@ export default function MainContent() {
         }
 
         // Convert translated segments to unified subtitle format with original text
-        subtitleSegments = translateResult.translatedSegments.map((segment: any, index: number) => ({
+        subtitleSegments = translateResult.translatedSegments.map((segment: { start: number; end: number; text: string; translatedText?: string }, index: number) => ({
           id: `${index + 1}`,
           startTime: segment.start,
           endTime: segment.end,
@@ -191,11 +191,6 @@ export default function MainContent() {
     }
   };
 
-  const handleSubtitlesChange = (updatedSubtitles: SubtitleSegment[]) => {
-    setSubtitles(updatedSubtitles);
-    console.log('Subtitles updated:', updatedSubtitles);
-    // TODO: Optionally update the project in DB here or save on explicit user action
-  };
 
   return (
     <div className="w-full max-w-6xl mx-auto">
