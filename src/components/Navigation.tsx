@@ -119,14 +119,23 @@ export default function Navigation() {
               >
                 홈
               </Link>
-              <Link 
-                href="/dashboard" 
-                className={`hover:text-blue-400 transition-colors ${
-                  pathname === '/dashboard' ? 'text-blue-400' : ''
-                }`}
-              >
-                대시보드
-              </Link>
+              <div className="relative group">
+                <Link 
+                  href="/dashboard" 
+                  className={`hover:text-blue-400 transition-colors ${
+                    pathname === '/dashboard' ? 'text-blue-400' : ''
+                  }`}
+                >
+                  대시보드
+                </Link>
+                <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                  <div className="bg-gray-900 text-white text-sm rounded-lg px-3 py-2 whitespace-nowrap shadow-lg border border-gray-700">
+                    <div className="font-medium mb-1">내 프로젝트 관리</div>
+                    <div className="text-xs text-gray-300">저장된 자막 프로젝트를 확인하고 관리하세요</div>
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 border-t border-l border-gray-700 rotate-45"></div>
+                  </div>
+                </div>
+              </div>
               <button 
                 onClick={handleSignOut}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm font-medium"
