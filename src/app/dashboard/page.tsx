@@ -51,20 +51,32 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <div className="container mx-auto px-4 py-8">
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-              <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
+        <div className="flex justify-between items-start mb-12">
+          <div className="text-left">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                내 프로젝트
+              </h1>
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              내 프로젝트
-            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl">
+              생성된 프로젝트들을 관리하고 자막 파일을 다운로드하세요
+            </p>
           </div>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            생성된 프로젝트들을 관리하고 자막 파일을 다운로드하세요
-          </p>
+          
+          {/* New Project Button - Top Right */}
+          <Link href="/">
+            <button className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              새 프로젝트
+            </button>
+          </Link>
         </div>
 
         {/* Stats Cards */}
@@ -199,7 +211,7 @@ export default async function DashboardPage() {
 
                   {/* Action Button */}
                   <Link href={`/project/${project.id}`}>
-                    <button className="w-full px-4 py-3 bg-gray-50 text-gray-700 font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group-hover:bg-blue-600 group-hover:text-white">
+                    <button className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
                       프로젝트 보기
                     </button>
                   </Link>
@@ -209,19 +221,6 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Quick Actions */}
-        {projects.length > 0 && (
-          <div className="mt-12 text-center">
-            <Link href="/">
-              <button className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 font-medium rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 hover:shadow-md transition-all duration-200">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                새 프로젝트 추가
-              </button>
-            </Link>
-          </div>
-        )}
       </div>
     </div>
   );

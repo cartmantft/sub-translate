@@ -66,7 +66,7 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
     <div className="space-y-4 p-4 border rounded-lg shadow-md bg-white">
       <button
         onClick={addSegment}
-        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-md"
+        className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold"
       >
         Add New Segment
       </button>
@@ -116,7 +116,7 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
               />
               <button
                 onClick={() => deleteSegment(segment.id)}
-                className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-200 shadow-sm"
+                className="px-3 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold"
                 title="Delete Segment"
               >
                 Delete

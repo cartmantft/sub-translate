@@ -4,7 +4,6 @@ import { useRef } from 'react';
 import Link from 'next/link';
 import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer';
 import UnifiedSubtitleViewer from '@/components/UnifiedSubtitleViewer';
-import SubtitleExportButtons from '@/components/SubtitleExportButtons';
 
 interface SubtitleSegment {
   id: string;
@@ -66,16 +65,7 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
             <span>대시보드로 돌아가기</span>
           </Link>
           
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 relative overflow-visible">
-            {/* Download Button - Top Right */}
-            <div className="absolute top-6 right-6 z-10">
-              <SubtitleExportButtons 
-                subtitles={parsedSubtitles} 
-                projectTitle={project.title || '제목 없는 프로젝트'}
-                compact={true}
-                showTitle={false}
-              />
-            </div>
+          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
             
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0">
