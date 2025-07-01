@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import VideoThumbnail from '@/components/VideoThumbnail';
+import ProjectThumbnail from '@/components/ProjectThumbnail';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -29,6 +28,14 @@ export default async function DashboardPage() {
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
+
+  // Debug: Log the projects data to see thumbnail URLs
+  console.log('Fetched projects:', projects?.map(p => ({
+    id: p.id,
+    title: p.title,
+    thumbnail_url: p.thumbnail_url,
+    video_url: p.video_url
+  })));
 
   if (error) {
     console.error('Error fetching projects:', error);
@@ -107,6 +114,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+
         {/* Projects Grid */}
         {projects.length === 0 ? (
           <div className="text-center py-16">
@@ -139,22 +147,13 @@ export default async function DashboardPage() {
                 className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
               >
                 {/* Project Thumbnail */}
-                {project.video_url && (
-                  <div className="relative overflow-hidden">
-                    <VideoThumbnail
-                      videoUrl={project.video_url}
-                      alt={`Thumbnail for ${project.title || 'Untitled Project'}`}
-                      className="w-full h-48"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
-                      <div className="w-16 h-16 bg-white bg-opacity-0 group-hover:bg-opacity-90 rounded-full flex items-center justify-center transform scale-0 group-hover:scale-100 transition-all duration-300">
-                        <svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <div className="relative h-48 overflow-hidden">
+                  <ProjectThumbnail 
+                    thumbnailUrl={project.thumbnail_url}
+                    videoUrl={project.video_url}
+                    title={project.title}
+                  />
+                </div>
 
                 {/* Project Content */}
                 <div className="p-6">

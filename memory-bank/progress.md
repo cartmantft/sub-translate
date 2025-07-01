@@ -137,6 +137,18 @@
      - 클라이언트와 서버 양쪽에서 세션 정리 처리
    - **결과**: 개발 환경에서 예측 가능한 인증 상태, 완전한 로그아웃 기능 구현
 
+10. **대시보드 썸네일 표시 문제** ✅ **해결됨** (2025-07-01)
+   - **문제**: 서버사이드에서 생성된 썸네일이 대시보드에서 표시되지 않음
+   - **원인**: 
+     - Next.js의 기본 이미지 도메인 제한으로 Supabase 외부 이미지 차단
+     - VideoThumbnail 컴포넌트의 불필요한 CORS 설정 문제
+     - CSS 오버레이가 썸네일을 가리는 문제
+   - **해결**:
+     - `next.config.mjs`에 Supabase 도메인을 허용된 이미지 도메인으로 추가
+     - VideoThumbnail 컴포넌트에서 crossOrigin 설정 제거
+     - CSS에서 오버레이에 `pointer-events: none` 추가
+   - **결과**: 대시보드에서 모든 프로젝트 썸네일이 정상적으로 표시되며, 서버사이드 + 클라이언트사이드 하이브리드 썸네일 시스템 완성
+
 ## 해결된 문제
 
 - **`projects` 테이블 RLS 위반 오류:** `new row violates row-level security policy` 오류는 `projects` 테이블이 존재하지 않았고, `INSERT` 및 `SELECT` RLS 정책이 `public` 역할로 잘못 설정되어 발생했습니다. 테이블 생성 및 `authenticated` 역할에 대한 정책을 올바르게 설정하여 해결되었습니다.
