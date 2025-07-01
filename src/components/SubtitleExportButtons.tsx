@@ -13,9 +13,18 @@ interface SubtitleSegment {
 interface SubtitleExportButtonsProps {
   subtitles: SubtitleSegment[];
   projectTitle: string;
+  compact?: boolean;
+  showTitle?: boolean;
+  className?: string;
 }
 
-export default function SubtitleExportButtons({ subtitles, projectTitle }: SubtitleExportButtonsProps) {
+export default function SubtitleExportButtons({ 
+  subtitles, 
+  projectTitle, 
+  compact = false, 
+  showTitle = true, 
+  className = '' 
+}: SubtitleExportButtonsProps) {
   const handleDownloadSRT = () => {
     if (subtitles.length === 0) {
       alert('자막이 없어서 다운로드할 수 없습니다.');
@@ -68,9 +77,23 @@ export default function SubtitleExportButtons({ subtitles, projectTitle }: Subti
     </svg>
   );
 
+  const ChevronDownIcon = () => (
+    <svg 
+      className="ml-2 w-4 h-4" 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+
   return (
-    <div>
-      <h3 className="text-lg font-medium text-gray-800 mb-3">Export Options</h3>
+    <div className={className}>
+      {showTitle && !compact && (
+        <h3 className="text-lg font-medium text-gray-800 mb-3">Export Options</h3>
+      )}
       <div className="flex justify-start">
         <DropdownMenu
           trigger={
@@ -81,22 +104,14 @@ export default function SubtitleExportButtons({ subtitles, projectTitle }: Subti
             }`}>
               <DownloadIcon />
               <span className="ml-2">Download</span>
-              <svg 
-                className="ml-2 w-4 h-4" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <ChevronDownIcon />
             </div>
           }
           items={downloadItems}
           disabled={subtitles.length === 0}
         />
       </div>
-      {subtitles.length === 0 && (
+      {subtitles.length === 0 && !compact && (
         <p className="text-sm text-gray-500 mt-2">
           자막이 생성되면 다운로드할 수 있습니다.
         </p>
