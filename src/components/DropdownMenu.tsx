@@ -4,8 +4,10 @@ import { useState, useRef, useEffect, ReactNode } from 'react';
 
 interface DropdownItem {
   label: string;
+  description?: string;
   onClick: () => void;
   disabled?: boolean;
+  icon?: string;
 }
 
 interface DropdownMenuProps {
@@ -118,13 +120,18 @@ export default function DropdownMenu({
                 key={index}
                 onClick={() => handleItemClick(item)}
                 disabled={item.disabled}
-                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                className={`w-full text-left px-4 py-3 text-sm transition-colors ${
                   item.disabled
                     ? 'text-gray-400 cursor-not-allowed'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                {item.label}
+                <div>
+                  <div className="font-medium">{item.label}</div>
+                  {item.description && (
+                    <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                  )}
+                </div>
               </button>
             ))}
           </div>
