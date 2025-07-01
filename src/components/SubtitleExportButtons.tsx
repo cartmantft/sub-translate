@@ -22,7 +22,6 @@ export default function SubtitleExportButtons({
   subtitles, 
   projectTitle, 
   compact = false, 
-  showTitle = true, 
   className = '' 
 }: SubtitleExportButtonsProps) {
   const handleDownloadSRT = () => {
