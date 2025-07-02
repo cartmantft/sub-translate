@@ -263,9 +263,9 @@ export default function MainContent() {
           )}
 
           {transcription && subtitles.length > 0 && !loading && (
-            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-              {/* Left Column: Video and Subtitles */}
-              <div className="space-y-6">
+            <div className="space-y-6">
+              {/* Top Row: Video and Subtitles side by side */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                 {/* Video Section */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                   <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3">
@@ -284,8 +284,8 @@ export default function MainContent() {
                 />
               </div>
 
-              {/* Right Column: Download Section and Project Status */}
-              <div className="space-y-6">
+              {/* Bottom Row: Download Section and Project Status */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                 {/* Enhanced Download Section */}
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 shadow-sm border border-indigo-100">
                   <div className="text-center mb-4">
