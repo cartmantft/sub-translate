@@ -32,13 +32,13 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
   };
 
   // Handle video time updates
-  const handleTimeUpdate = () => {
+  const handleTimeUpdate = useCallback(() => {
     if (videoRef.current) {
       const time = videoRef.current.currentTime;
       setCurrentTime(time);
       onTimeUpdate?.(time);
     }
-  };
+  }, [onTimeUpdate]);
 
   // Jump to specific time in video - use useCallback to prevent unnecessary re-renders
   const jumpToTime = useCallback((time: number) => {
@@ -61,7 +61,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
         video.removeEventListener('timeupdate', handleTimeUpdate);
       };
     }
-  }, []);
+  }, [handleTimeUpdate]);
 
   const currentSubtitle = getCurrentSubtitle();
 
