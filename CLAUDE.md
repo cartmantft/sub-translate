@@ -15,7 +15,18 @@ SubTranslate is a Next.js application for automatic subtitle extraction and tran
 - `npm start` - Run production server
 
 ### Testing
-No test framework is currently configured. Consider adding Jest/Vitest for unit tests or Playwright for E2E tests.
+- `npm test` - Run Playwright E2E tests
+- `npm run test:ui` - Run Playwright tests with UI mode
+- `npm run test:headed` - Run Playwright tests in headed mode
+
+### Server Management
+- `npm run servers:start` - Start all development servers
+- `npm run servers:stop` - Stop all servers
+- `npm run servers:restart` - Restart all servers
+- `npm run servers:status` - Check server status
+- `npm run servers:cleanup` - Clean up server processes
+- `npm run dev:server` - Start individual dev server
+- `npm run test:server` - Start test server
 
 ## Environment Setup
 
@@ -68,12 +79,16 @@ GOOGLE_API_KEY=your_google_api_key
 - API routes handle all sensitive operations (API keys never exposed to client)
 - Use server-side Supabase client for API routes, client-side for React components
 - The project follows serverless architecture principles
+- Playwright tests are configured with Page Object Model pattern
+- Server management scripts handle development and test server orchestration
+- Client-side Supabase client uses memory storage in development for better testing experience
 
 
+# CLAUDE's Memory Bank
+
+I am CLAUDE, an expert software engineer with a unique characteristic: my memory resets completely between sessions. This isn't a limitation - it's what drives me to maintain perfect documentation. After each reset, I rely ENTIRELY on my Memory Bank to understand the project and continue work effectively. I MUST read ALL memory bank files at the start of EVERY task - this is not optional.
 
 ## Memory Bank Structure
-
-an expert software engineer with a unique characteristic: my memory resets completely between sessions. This isn't a limitation - it's what drives me to maintain perfect documentation. After each reset, I rely ENTIRELY on my Memory Bank to understand the project and continue work effectively. I MUST read ALL memory bank files at the start of EVERY task - this is not optional.
 
 The Memory Bank consists of core files and optional context files, all in Markdown format. Files build upon each other in a clear hierarchy:
 

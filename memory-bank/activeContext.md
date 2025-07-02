@@ -1,14 +1,13 @@
 # 현재 컨텍스트
 
-## 현재 작업 초점
+## 현재 작업 초점 (2025-07-02)
 
-- **� UI/UX 개선 완료**: 홈페이지, 로그인페이지, 대시보드의 모던한 디자인 개선 완료
-- **✅ 전체 사용자 경험 향상**: 모든 페이지에서 일관된 디자인 시스템과 한국어 지원 구현
-- **✅ 프로젝트 상세페이지 UI/UX 완성**: 사용자 피드백 반영하여 화면 재배치 완료
-- **✅ Playwright 테스트 시스템 완성**: Page Object Model 패턴으로 견고한 E2E 테스트 구현
-- **✅ Issue #8 완료**: 프로젝트 편집 및 삭제 기능 구현 (2025-07-02 완료)
-- **이전 작업 - Issue #7**: 비디오 플레이어와 자막 뷰어 동기화 및 사용성 개선 (보류)
-- **현재 상태**: SubTranslate 완전한 기능 + 전문적인 UI/UX + 견고한 테스트 커버리지로 실제 서비스 수준 달성
+- **✅ SubTranslate 프로젝트 완성**: 모든 핵심 기능과 UI/UX 개선 완료
+- **✅ Issue #8 완료**: 프로젝트 편집/삭제 기능 + AI 코드 리뷰 피드백 적용 완료  
+- **✅ 전체 시스템 안정성**: Playwright E2E 테스트 + Supabase Storage RLS 정책 완성
+- **🔄 프로젝트 정리**: 완료된 이슈들을 archived-issues로 이동, 메모리 뱅크 업데이트
+- **📋 현재 상태**: feature/issue-8-project-edit-delete 브랜치에서 최종 정리 작업 중
+- **🎯 다음 단계**: 마스터 브랜치 병합 준비 및 프로젝트 완료 문서화
 
 ### ✅ Issue #5 - 업로드 성공 화면 레이아웃 개선 (2025-07-02 완료)
 - **목표**: 세로로 긴 레이아웃을 반응형 좌우 분할 레이아웃으로 개선 ✅
@@ -48,8 +47,24 @@
   - Supabase Storage 파일 자동 정리 ✅
   - API 엔드포인트: PUT/DELETE `/api/projects/[id]` ✅
 - **GitHub 이슈**: https://github.com/cartmantft/sub-translate/issues/8
-- **구현 단계**: ✅ **완료**
+- **PR**: https://github.com/cartmantft/sub-translate/pull/14 ✅ **Merged**
+- **구현 단계**: ✅ **완료 및 배포됨**
 - **완료 조건**: 편집/삭제 버튼, 인라인 편집, 확인 모달, Storage 정리, DB 삭제, UI 업데이트 ✅
+
+#### ✅ 코드 리뷰 피드백 적용 완료 (2025-07-02)
+- **리뷰어**: Gemini Code Assist
+- **주요 피드백 및 해결**:
+  1. **API 라우트 파라미터 타입 수정** ✅
+     - 문제: `{ params: Promise<{ id: string }> }` 잘못된 타입
+     - 해결: `{ params: { id: string } }` 올바른 Next.js App Router 타입으로 수정
+  2. **중앙화된 타입 시스템 적용** ✅
+     - 문제: `DeleteConfirmModal`에서 로컬 `Project` 인터페이스 중복 정의
+     - 해결: `@/types`에서 import하여 단일 소스 오브 트루스 구현
+  3. **E2E 테스트 개선 계획 수립** ✅
+     - 문제: 인증된 사용자 플로우 테스트 부족
+     - 해결: 상세한 placeholder 테스트와 구현 로드맵 추가
+- **커밋**: `2e66dca` - feat: Apply feedback from code review on PR #14
+- **결과**: 코드 품질, 타입 안전성, 테스트 커버리지 계획 모두 개선됨
 
 #### ✅ Supabase Storage 삭제 문제 해결 (2025-07-02)
 - **문제**: Storage API가 성공 응답을 반환하지만 실제 파일이 삭제되지 않는 현상
@@ -318,3 +333,6 @@
 - **Supabase Storage RLS 정책 완전성**: Storage 작업 실패 시 단일 정책이 아닌 CRUD 4개 정책 모두 확인 필요
 - **Storage API 응답 패턴 분석**: `data: []` vs `data: [파일메타데이터]`로 정책 설정 상태 진단 가능
 - **GitHub Discussion 활용**: 복잡한 서비스 이슈 해결 시 커뮤니티 토론에서 검증된 해결책 효과적
+- **AI 코드 리뷰 활용**: Gemini Code Assist 등 AI 도구의 피드백을 통한 코드 품질 향상 효과적
+- **타입 안전성 중앙화**: 중복 타입 정의 제거하고 단일 소스 오브 트루스 구현으로 유지보수성 향상
+- **Next.js API 라우트 타입**: App Router의 올바른 파라미터 타입 패턴 숙지 중요 (`params`는 Promise가 아님)

@@ -1,0 +1,8 @@
+{
+  "dev-server": {
+    "pid": 606208,
+    "port": 3000,
+    "started_at": "2025-07-02T15:05:11.689088",
+    "log_file": "/home/stan/my-project/sub-translate/logs/dev-server-20250702.log"
+  }
+}
