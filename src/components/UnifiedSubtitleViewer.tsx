@@ -14,12 +14,14 @@ interface UnifiedSubtitleViewerProps {
   segments: SubtitleSegment[];
   onSegmentClick?: (startTime: number) => void;
   showOriginal?: boolean;
+  currentTime?: number;
 }
 
 export default function UnifiedSubtitleViewer({ 
   segments, 
   onSegmentClick, 
-  showOriginal = true 
+  showOriginal = true,
+  currentTime
 }: UnifiedSubtitleViewerProps) {
   const [activeTab, setActiveTab] = useState<'both' | 'original' | 'translated'>('both');
 
@@ -27,6 +29,13 @@ export default function UnifiedSubtitleViewer({
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toFixed(0).padStart(2, '0')}`;
+  };
+
+  const getCurrentSubtitleIndex = (): number => {
+    if (currentTime === undefined) return -1;
+    return segments.findIndex(
+      segment => currentTime >= segment.startTime && currentTime <= segment.endTime
+    );
   };
 
   const handleSegmentClick = (startTime: number) => {
@@ -120,7 +129,11 @@ export default function UnifiedSubtitleViewer({
               {segments.map((segment, index) => (
                 <div 
                   key={segment.id} 
-                  className="group cursor-pointer p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all duration-200"
+                  className={`group cursor-pointer p-4 rounded-xl border transition-all duration-200 ${
+                    getCurrentSubtitleIndex() === index
+                      ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200'
+                      : 'border-gray-100 hover:border-blue-200 hover:bg-blue-50'
+                  }`}
                   onClick={() => handleSegmentClick(segment.startTime)}
                 >
                   <div className="flex items-center justify-between mb-3">
