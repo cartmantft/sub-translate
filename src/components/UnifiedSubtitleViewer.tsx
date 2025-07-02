@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 
 interface SubtitleSegment {
   id: string;
@@ -24,25 +24,50 @@ export default function UnifiedSubtitleViewer({
   currentTime
 }: UnifiedSubtitleViewerProps) {
   const [activeTab, setActiveTab] = useState<'both' | 'original' | 'translated'>('translated');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const formatTime = (seconds: number) => {
+  const formatTime = useCallback((seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toFixed(0).padStart(2, '0')}`;
-  };
+  }, []);
 
-  const getCurrentSubtitleIndex = (): number => {
+  const getCurrentSubtitleIndex = useMemo((): number => {
     if (currentTime === undefined) return -1;
-    return segments.findIndex(
-      segment => currentTime >= segment.startTime && currentTime <= segment.endTime
+    
+    // More robust time matching with small tolerance for floating point precision
+    const tolerance = 0.1;
+    const index = segments.findIndex(
+      segment => currentTime >= (segment.startTime - tolerance) && currentTime <= (segment.endTime + tolerance)
     );
-  };
+    
+    // Debug logging (can be removed in production)
+    if (process.env.NODE_ENV === 'development' && currentTime !== undefined) {
+      console.log(`Current time: ${currentTime}, Found index: ${index}`);
+    }
+    
+    return index;
+  }, [currentTime, segments]);
 
-  const handleSegmentClick = (startTime: number) => {
+  const handleSegmentClick = useCallback((startTime: number) => {
     if (onSegmentClick) {
       onSegmentClick(startTime);
     }
-  };
+  }, [onSegmentClick]);
+
+  // Auto-scroll to highlighted subtitle
+  useEffect(() => {
+    if (getCurrentSubtitleIndex >= 0 && scrollContainerRef.current) {
+      const highlightedElement = scrollContainerRef.current.children[getCurrentSubtitleIndex] as HTMLElement;
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
+        });
+      }
+    }
+  }, [getCurrentSubtitleIndex]);
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -125,12 +150,12 @@ export default function UnifiedSubtitleViewer({
                 세그먼트를 클릭하면 비디오가 해당 시간으로 이동합니다
               </p>
             </div>
-            <div className="overflow-y-auto pr-2 space-y-2" style={{ maxHeight: '55vh' }}>
+            <div ref={scrollContainerRef} className="overflow-y-auto pr-2 space-y-2" style={{ maxHeight: '55vh' }}>
               {segments.map((segment, index) => (
                 <div 
                   key={segment.id} 
                   className={`group cursor-pointer p-4 rounded-xl border transition-all duration-200 ${
-                    getCurrentSubtitleIndex() === index
+                    getCurrentSubtitleIndex === index
                       ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200'
                       : 'border-gray-100 hover:border-blue-200 hover:bg-blue-50'
                   }`}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import FileUploader from '@/components/FileUploader';
 import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer';
 import UnifiedSubtitleViewer from '@/components/UnifiedSubtitleViewer';
@@ -194,15 +194,15 @@ export default function MainContent() {
     }
   };
 
-  const handleSubtitleClick = (startTime: number) => {
+  const handleSubtitleClick = useCallback((startTime: number) => {
     if (videoPlayerRef.current) {
       videoPlayerRef.current.jumpToTime(startTime);
     }
-  };
+  }, []);
 
-  const handleVideoTimeUpdate = (time: number) => {
+  const handleVideoTimeUpdate = useCallback((time: number) => {
     setCurrentVideoTime(time);
-  };
+  }, []);
 
 
   return (

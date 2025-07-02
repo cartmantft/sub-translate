@@ -1,0 +1,14 @@
+{
+  "dev-server": {
+    "pid": 441679,
+    "port": 3001,
+    "started_at": "2025-07-02T11:57:30.863161",
+    "log_file": "/home/stan/my-project/sub-translate/logs/dev-server-20250702.log"
+  },
+  "test-server": {
+    "pid": 442197,
+    "port": 4000,
+    "started_at": "2025-07-02T11:57:42.862915",
+    "log_file": "/home/stan/my-project/sub-translate/logs/test-server-20250702.log"
+  }
+}
