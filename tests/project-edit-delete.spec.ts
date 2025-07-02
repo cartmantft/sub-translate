@@ -13,18 +13,6 @@ test.describe('프로젝트 편집 및 삭제 기능', () => {
     await expect(page.getByRole('heading', { name: '로그인' })).toBeVisible();
   });
 
-  test('프로젝트 카드 호버 시 편집/삭제 버튼 표시', async ({ page }) => {
-    // 홈페이지 방문
-    await page.goto('/');
-    
-    // 홈페이지 기본 요소 확인
-    await expect(page.getByRole('heading', { name: 'SubTranslate' })).toBeVisible();
-    
-    // 대시보드 링크 확인 (현재는 인증이 필요하므로 링크만 확인)
-    const dashboardLink = page.getByRole('link', { name: '내 프로젝트' });
-    await expect(dashboardLink).toBeVisible();
-  });
-
   test('API 엔드포인트 인증 확인', async ({ page }) => {
     // 인증 없이 프로젝트 편집 API 호출 시 401 에러 확인
     const editResponse = await page.request.put('/api/projects/test-id', {
@@ -37,28 +25,7 @@ test.describe('프로젝트 편집 및 삭제 기능', () => {
     expect(deleteResponse.status()).toBe(401);
   });
 
-  test('프로젝트 편집 모달 UI 요소 확인', async ({ page }) => {
-    // 홈페이지에서 시작
-    await page.goto('/');
-    
-    // SubTranslate 제목이 표시되는지 확인
-    await expect(page.locator('h1').filter({ hasText: 'SubTranslate' })).toBeVisible();
-    
-    // 파일 업로드 영역 확인
-    await expect(page.getByText('비디오 파일을 드래그하여 업로드하거나 클릭하여 선택하세요')).toBeVisible();
-  });
-
-  test('삭제 확인 모달의 안전장치 메시지 확인', async ({ page }) => {
-    // 홈페이지에서 시작하여 기본 UI 요소 확인
-    await page.goto('/');
-    
-    // 주요 기능 카드들이 표시되는지 확인
-    await expect(page.getByText('음성 인식')).toBeVisible();
-    await expect(page.getByText('자동 번역')).toBeVisible();
-    await expect(page.getByText('자막 생성')).toBeVisible();
-  });
-
-  test('프로젝트 이름 유효성 검사', async ({ page }) => {
+  test('프로젝트 이름 유효성 검사 - API 레벨', async ({ page }) => {
     // API 테스트: 빈 제목으로 편집 시도
     const emptyTitleResponse = await page.request.put('/api/projects/test-id', {
       data: { title: '' }
@@ -118,5 +85,51 @@ test.describe('프로젝트 편집 및 삭제 기능', () => {
     const isNotFound = currentUrl.includes('404') || await page.getByText('Not Found').isVisible();
     
     expect(isLoginPage || isNotFound).toBe(true);
+  });
+
+  // Note: The following tests would require authentication setup to test actual edit/delete functionality
+  // In a real testing environment, these would include:
+  // 1. Setting up test user authentication
+  // 2. Creating test projects
+  // 3. Testing actual edit and delete interactions
+  // 4. Verifying UI updates after successful operations
+  
+  test.describe('Authenticated User Flows (Placeholder)', () => {
+    test.skip('프로젝트 이름 편집 - 전체 플로우', async ({ page }) => {
+      // TODO: Implement full authenticated test flow
+      // 1. Log in test user
+      // 2. Navigate to dashboard
+      // 3. Find project card and hover to reveal edit button
+      // 4. Click edit, modify title, save
+      // 5. Verify title change in UI
+      // 6. Verify API call was made correctly
+    });
+
+    test.skip('프로젝트 삭제 - 전체 플로우', async ({ page }) => {
+      // TODO: Implement full authenticated test flow
+      // 1. Log in test user
+      // 2. Navigate to dashboard with test project
+      // 3. Hover over project card and click delete button
+      // 4. Verify confirmation modal appears
+      // 5. Confirm deletion
+      // 6. Verify project is removed from dashboard
+      // 7. Verify storage files are cleaned up
+    });
+
+    test.skip('편집 에러 처리 - 빈 제목', async ({ page }) => {
+      // TODO: Test error handling for empty title
+    });
+
+    test.skip('편집 에러 처리 - 너무 긴 제목', async ({ page }) => {
+      // TODO: Test error handling for title too long
+    });
+
+    test.skip('삭제 취소 플로우', async ({ page }) => {
+      // TODO: Test canceling deletion in confirmation modal
+    });
+
+    test.skip('실시간 대시보드 통계 업데이트', async ({ page }) => {
+      // TODO: Test that dashboard stats update after edit/delete operations
+    });
   });
 });

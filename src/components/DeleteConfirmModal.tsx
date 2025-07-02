@@ -1,10 +1,6 @@
 'use client';
 
-interface Project {
-  id: string;
-  title: string;
-  created_at: string;
-}
+import { Project } from '@/types';
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;

@@ -109,10 +109,10 @@ async function deleteStorageFile(fileUrl: string, bucketName: string, supabase: 
 // PUT method - Update project (edit project name)
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const { title } = await request.json();
     
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
@@ -190,10 +190,10 @@ export async function PUT(
 // DELETE method - Delete project and all related resources
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
