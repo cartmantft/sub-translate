@@ -40,7 +40,6 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
   }, []);
 
   const handleVideoTimeUpdate = useCallback((time: number) => {
-    console.log('ProjectPageContent: Video time update received:', time);
     setCurrentVideoTime(time);
   }, []);
 

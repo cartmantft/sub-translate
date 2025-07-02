@@ -35,7 +35,6 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
   const handleTimeUpdate = useCallback(() => {
     if (videoRef.current) {
       const time = videoRef.current.currentTime;
-      console.log('VideoPlayer: Time update:', time, 'onTimeUpdate exists?', !!onTimeUpdate);
       setCurrentTime(time);
       onTimeUpdate?.(time);
     }

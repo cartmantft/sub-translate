@@ -201,7 +201,6 @@ export default function MainContent() {
   }, []);
 
   const handleVideoTimeUpdate = useCallback((time: number) => {
-    console.log('MainContent: Video time update received:', time);
     setCurrentVideoTime(time);
   }, []);
 
