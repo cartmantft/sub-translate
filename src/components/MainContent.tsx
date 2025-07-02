@@ -264,7 +264,7 @@ export default function MainContent() {
 
           {transcription && subtitles.length > 0 && !loading && (
             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-              {/* Left Column: Video and Success Message */}
+              {/* Left Column: Video and Subtitles */}
               <div className="space-y-6">
                 {/* Video Section */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -276,7 +276,34 @@ export default function MainContent() {
                   </div>
                 </div>
 
-                {/* Project Success Section (Compact) */}
+                {/* Unified Subtitle Viewer */}
+                <UnifiedSubtitleViewer 
+                  segments={subtitles}
+                  onSegmentClick={handleSubtitleClick}
+                  showOriginal={true}
+                />
+              </div>
+
+              {/* Right Column: Download Section and Project Status */}
+              <div className="space-y-6">
+                {/* Enhanced Download Section */}
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 shadow-sm border border-indigo-100">
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-lg mb-3">
+                      <svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-800 mb-1">자막이 준비되었습니다!</h2>
+                    <p className="text-gray-600 text-sm">원하는 형식으로 자막 파일을 다운로드하세요</p>
+                  </div>
+                  <SubtitleExportButtons 
+                    subtitles={subtitles} 
+                    projectTitle={`Video Project - ${new Date().toLocaleDateString()}`} 
+                  />
+                </div>
+
+                {/* Project Success Section */}
                 {projectId && (
                   <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6">
                     <div className="text-center">
@@ -310,33 +337,6 @@ export default function MainContent() {
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Right Column: Subtitles and Download */}
-              <div className="space-y-6">
-                {/* Enhanced Download Section (Moved to top for accessibility) */}
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 shadow-sm border border-indigo-100">
-                  <div className="text-center mb-4">
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-lg mb-3">
-                      <svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <h2 className="text-xl font-bold text-gray-800 mb-1">자막이 준비되었습니다!</h2>
-                    <p className="text-gray-600 text-sm">원하는 형식으로 자막 파일을 다운로드하세요</p>
-                  </div>
-                  <SubtitleExportButtons 
-                    subtitles={subtitles} 
-                    projectTitle={`Video Project - ${new Date().toLocaleDateString()}`} 
-                  />
-                </div>
-
-                {/* Unified Subtitle Viewer */}
-                <UnifiedSubtitleViewer 
-                  segments={subtitles}
-                  onSegmentClick={handleSubtitleClick}
-                  showOriginal={true}
-                />
               </div>
             </div>
           )}
