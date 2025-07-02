@@ -65,6 +65,7 @@ export default function MainContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<ProcessStep>('upload');
+  const [currentVideoTime, setCurrentVideoTime] = useState(0);
 
   const handleUploadSuccess = async (url: string) => {
     setVideoSrc(url);
@@ -199,6 +200,10 @@ export default function MainContent() {
     }
   };
 
+  const handleVideoTimeUpdate = (time: number) => {
+    setCurrentVideoTime(time);
+  };
+
 
   return (
     <div className="w-full max-w-6xl mx-auto">
@@ -272,7 +277,7 @@ export default function MainContent() {
                     <h2 className="text-lg font-semibold text-white text-center">업로드된 비디오</h2>
                   </div>
                   <div className="p-4">
-                    <VideoPlayer ref={videoPlayerRef} src={videoSrc} />
+                    <VideoPlayer ref={videoPlayerRef} src={videoSrc} onTimeUpdate={handleVideoTimeUpdate} />
                   </div>
                 </div>
 
@@ -281,6 +286,7 @@ export default function MainContent() {
                   segments={subtitles}
                   onSegmentClick={handleSubtitleClick}
                   showOriginal={true}
+                  currentTime={currentVideoTime}
                 />
               </div>
 
@@ -348,7 +354,7 @@ export default function MainContent() {
                 <h2 className="text-xl font-semibold text-white text-center">업로드된 비디오</h2>
               </div>
               <div className="p-6">
-                <VideoPlayer ref={videoPlayerRef} src={videoSrc} />
+                <VideoPlayer ref={videoPlayerRef} src={videoSrc} onTimeUpdate={handleVideoTimeUpdate} />
               </div>
             </div>
           )}
