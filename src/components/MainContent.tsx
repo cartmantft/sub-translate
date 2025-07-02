@@ -167,7 +167,7 @@ export default function MainContent() {
           transcription: transcriptionText,
           subtitles: subtitleSegments,
           originalSegments: whisperSegments || [],
-          title: `Video Project - ${new Date().toLocaleDateString()}`,
+          title: `Video Project - ${new Date().toISOString().split('T')[0]}`,
         }),
       });
 
@@ -299,7 +299,7 @@ export default function MainContent() {
                   </div>
                   <SubtitleExportButtons 
                     subtitles={subtitles} 
-                    projectTitle={`Video Project - ${new Date().toLocaleDateString()}`} 
+                    projectTitle={`Video Project - ${new Date().toISOString().split('T')[0]}`} 
                   />
                 </div>
 
