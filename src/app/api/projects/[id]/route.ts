@@ -40,21 +40,68 @@ async function deleteStorageFile(fileUrl: string, bucketName: string, supabase: 
       return false;
     }
     
-    console.log(`Deleting file from storage: ${bucketName}/${filePath}`);
+    console.log(`🗑️ Attempting to delete file: ${bucketName}/${filePath}`);
+    console.log(`📁 Full file URL: ${fileUrl}`);
     
-    const { error } = await supabase.storage
+    // Step 1: Verify file exists before deletion
+    console.log(`🔍 Step 1: Checking if file exists before deletion...`);
+    const { data: preDeleteCheck, error: preDeleteError } = await supabase.storage
+      .from(bucketName)
+      .download(filePath);
+    
+    if (preDeleteError) {
+      console.log(`❌ File doesn't exist or can't be accessed: ${preDeleteError.message}`);
+      return true; // File doesn't exist, consider it "deleted"
+    }
+    console.log(`✅ File exists and is accessible (size: ${preDeleteCheck?.size || 'unknown'} bytes)`);
+    
+    // Step 2: Attempt deletion
+    console.log(`🗑️ Step 2: Attempting to delete file...`);
+    const { data: deleteData, error: deleteError } = await supabase.storage
       .from(bucketName)
       .remove([filePath]);
     
-    if (error) {
-      console.error(`Error deleting file from ${bucketName}:`, error);
+    console.log(`🔄 Storage delete API response:`);
+    console.log(`   - data:`, deleteData);
+    console.log(`   - error:`, deleteError);
+    
+    if (deleteError) {
+      console.error(`❌ Delete API returned error:`, deleteError);
+      console.error(`   Error details:`, JSON.stringify(deleteError, null, 2));
+      
+      // Check for specific permission errors
+      if (deleteError.message?.includes('access') || deleteError.message?.includes('permission')) {
+        console.error(`🚫 PERMISSION ERROR: Likely missing RLS policy for DELETE on videos bucket`);
+        console.error(`   Required policy: bucket_id = 'videos' AND owner = auth.uid()::text`);
+      }
       return false;
     }
     
-    console.log(`Successfully deleted file: ${bucketName}/${filePath}`);
-    return true;
+    // Note: data: [] with error: null can actually mean successful deletion
+    // The empty array doesn't necessarily indicate failure
+    console.log(`📝 Note: Empty data array (${JSON.stringify(deleteData)}) with null error may indicate successful deletion`);
+    console.log(`   This is a known behavior of Supabase Storage API`);
+    console.log(`   Proceeding to verify actual deletion status...`);
+    
+    // Step 3: Verify deletion by attempting to download
+    console.log(`🔍 Step 3: Verifying deletion by attempting to access file...`);
+    const { data: postDeleteCheck, error: postDeleteError } = await supabase.storage
+      .from(bucketName)
+      .download(filePath);
+    
+    if (postDeleteError) {
+      // File is inaccessible, likely deleted successfully
+      console.log(`✅ DELETION VERIFIED: File is no longer accessible`);
+      console.log(`   Error when trying to access:`, postDeleteError.message);
+      return true;
+    } else {
+      // File is still accessible, deletion failed
+      console.warn(`⚠️ DELETION FAILED: File is still accessible after deletion attempt`);
+      console.warn(`   File size:`, postDeleteCheck?.size || 'unknown');
+      return false;
+    }
   } catch (error) {
-    console.error('Error in deleteStorageFile:', error);
+    console.error('❌ Unexpected error in deleteStorageFile:', error);
     return false;
   }
 }
@@ -62,9 +109,10 @@ async function deleteStorageFile(fileUrl: string, bucketName: string, supabase: 
 // PUT method - Update project (edit project name)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { title } = await request.json();
     
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
@@ -96,7 +144,7 @@ export async function PUT(
     const { data: existingProject, error: fetchError } = await supabase
       .from('projects')
       .select('id, user_id, title')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
 
@@ -111,7 +159,7 @@ export async function PUT(
     const { data: updatedProject, error: updateError } = await supabase
       .from('projects')
       .update({ title: title.trim() })
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id) // Double-check ownership
       .select()
       .single();
@@ -142,9 +190,10 @@ export async function PUT(
 // DELETE method - Delete project and all related resources
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -159,7 +208,7 @@ export async function DELETE(
     const { data: project, error: fetchError } = await supabase
       .from('projects')
       .select('id, user_id, video_url, thumbnail_url, title')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
 
@@ -198,13 +247,16 @@ export async function DELETE(
     }
 
     // Delete project record from database
+    console.log(`Attempting to delete project from database: ${project.title} (${id})`);
+    
     const { error: deleteError } = await supabase
       .from('projects')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id); // Double-check ownership
 
     if (deleteError) {
+      console.error('Failed to delete project from database:', deleteError);
       console.error('Error deleting project from database:', deleteError);
       return NextResponse.json(
         { 
@@ -222,6 +274,7 @@ export async function DELETE(
     }
 
     deletionResults.databaseRecord = true;
+    console.log(`✅ Successfully deleted project from database: ${project.title} (${id})`);
 
     console.log(`Successfully deleted project: ${project.title} (${project.id})`);
     console.log('Deletion results:', deletionResults);

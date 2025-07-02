@@ -4,17 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import ProjectThumbnail from '@/components/ProjectThumbnail';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
-
-interface Project {
-  id: string;
-  user_id: string;
-  video_url: string;
-  thumbnail_url?: string;
-  transcription: string;
-  subtitles: any;
-  title: string;
-  created_at: string;
-}
+import { Project } from '@/types';
 
 interface ProjectCardProps {
   project: Project;
