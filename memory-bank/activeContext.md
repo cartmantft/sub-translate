@@ -6,7 +6,8 @@
 - **✅ 전체 사용자 경험 향상**: 모든 페이지에서 일관된 디자인 시스템과 한국어 지원 구현
 - **✅ 프로젝트 상세페이지 UI/UX 완성**: 사용자 피드백 반영하여 화면 재배치 완료
 - **✅ Playwright 테스트 시스템 완성**: Page Object Model 패턴으로 견고한 E2E 테스트 구현
-- **🔄 현재 진행 중 - Issue #7**: 비디오 플레이어와 자막 뷰어 동기화 및 사용성 개선
+- **✅ Issue #8 완료**: 프로젝트 편집 및 삭제 기능 구현 (2025-07-02 완료)
+- **이전 작업 - Issue #7**: 비디오 플레이어와 자막 뷰어 동기화 및 사용성 개선 (보류)
 - **현재 상태**: SubTranslate 완전한 기능 + 전문적인 UI/UX + 견고한 테스트 커버리지로 실제 서비스 수준 달성
 
 ### ✅ Issue #5 - 업로드 성공 화면 레이아웃 개선 (2025-07-02 완료)
@@ -33,6 +34,36 @@
   - 비디오 진행바 스타일 개선 (높이, 색상, 가시성)
 - **GitHub 이슈**: https://github.com/cartmantft/sub-translate/issues/7
 - **구현 단계**: 계획 수립 완료, 구현 시작 예정
+
+### ✅ Issue #8 - 프로젝트 편집 및 삭제 기능 구현 (2025-07-02 완료)
+- **목표**: 대시보드에서 프로젝트 이름 수정 + 프로젝트 완전 삭제 기능 추가 ✅
+- **문제**: 
+  - 현재 프로젝트 이름을 수정할 수 없음 ✅
+  - 불필요한 프로젝트를 삭제할 수 없음 ✅
+  - Storage 파일 정리 기능 없음 ✅
+- **해결 방향**:
+  - 각 프로젝트 카드에 편집/삭제 버튼 추가 ✅
+  - 인라인 편집 모드로 프로젝트명 수정 가능 ✅
+  - 삭제 확인 모달로 실수 방지 ✅
+  - Supabase Storage 파일 자동 정리 ✅
+  - API 엔드포인트: PUT/DELETE `/api/projects/[id]` ✅
+- **GitHub 이슈**: https://github.com/cartmantft/sub-translate/issues/8
+- **구현 단계**: ✅ **완료**
+- **완료 조건**: 편집/삭제 버튼, 인라인 편집, 확인 모달, Storage 정리, DB 삭제, UI 업데이트 ✅
+
+#### ✅ Supabase Storage 삭제 문제 해결 (2025-07-02)
+- **문제**: Storage API가 성공 응답을 반환하지만 실제 파일이 삭제되지 않는 현상
+- **근본 원인**: Supabase Storage RLS 정책 누락 - DELETE 정책뿐만 아니라 SELECT, INSERT, UPDATE 정책도 모두 필요
+- **해결책**: 4개 CRUD 정책을 모두 명시적으로 생성 (GitHub Discussion 참조)
+  ```sql
+  -- SELECT, INSERT, UPDATE, DELETE 정책 모두 생성
+  create policy "select_videos_bucket" on storage.objects for select to authenticated using (bucket_id = 'videos');
+  create policy "insert_videos_bucket" on storage.objects for insert to authenticated with check (bucket_id = 'videos');
+  create policy "update_videos_bucket" on storage.objects for update to authenticated using (bucket_id = 'videos');
+  create policy "delete_videos_bucket" on storage.objects for delete to authenticated using (bucket_id = 'videos');
+  ```
+- **결과**: Storage API가 올바른 파일 메타데이터 반환 (`data: [파일객체]` vs 이전 `data: []`)
+- **참조**: GitHub Discussion - https://github.com/orgs/supabase/discussions/4133, https://github.com/orgs/supabase/discussions/5786
 
 ## ✅ 최근 완료된 개선사항 (2025-07-01)
 
@@ -284,3 +315,6 @@
 - **다중 브라우저 지원**: Chrome, Firefox, Safari, Mobile 환경에서 일관된 사용자 경험 보장 위한 크로스 브라우저 테스트 중요성
 - **Context7 MCP 활용**: 복잡한 기술 학습 시 Context7로 최신 문서와 베스트 프랙티스 효과적 습득 가능
 - **Sequential MCP 활용**: 복잡한 구현 작업의 단계별 계획 수립과 체계적 접근법으로 작업 효율성 극대화
+- **Supabase Storage RLS 정책 완전성**: Storage 작업 실패 시 단일 정책이 아닌 CRUD 4개 정책 모두 확인 필요
+- **Storage API 응답 패턴 분석**: `data: []` vs `data: [파일메타데이터]`로 정책 설정 상태 진단 가능
+- **GitHub Discussion 활용**: 복잡한 서비스 이슈 해결 시 커뮤니티 토론에서 검증된 해결책 효과적
