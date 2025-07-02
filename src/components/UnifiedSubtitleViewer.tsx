@@ -41,10 +41,14 @@ export default function UnifiedSubtitleViewer({
       segment => currentTime >= (segment.startTime - tolerance) && currentTime <= (segment.endTime + tolerance)
     );
     
-    // Debug logging (can be removed in production)
-    if (process.env.NODE_ENV === 'development' && currentTime !== undefined) {
-      console.log(`Current time: ${currentTime}, Found index: ${index}`);
-    }
+    // Debug logging - enhanced for better debugging
+    console.log('UnifiedSubtitleViewer Debug:', {
+      currentTime,
+      segmentsLength: segments.length,
+      foundIndex: index,
+      firstSegment: segments[0] ? { start: segments[0].startTime, end: segments[0].endTime } : null,
+      lastSegment: segments[segments.length - 1] ? { start: segments[segments.length - 1].startTime, end: segments[segments.length - 1].endTime } : null
+    });
     
     return index;
   }, [currentTime, segments]);

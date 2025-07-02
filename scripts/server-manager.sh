@@ -46,7 +46,7 @@ start_all_servers() {
     # Check if AUTO_CLEANUP_ON_START is enabled (default: true)
     if [ "${AUTO_CLEANUP_ON_START:-true}" = "true" ]; then
         echo "🧹 Pre-startup cleanup (disable with AUTO_CLEANUP_ON_START=false)..."
-        cleanup_processes
+        "$CLEANUP_SCRIPT" --force
         print_separator
     fi
     

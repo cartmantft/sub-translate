@@ -201,6 +201,7 @@ export default function MainContent() {
   }, []);
 
   const handleVideoTimeUpdate = useCallback((time: number) => {
+    console.log('MainContent: Video time update received:', time);
     setCurrentVideoTime(time);
   }, []);
 
@@ -277,7 +278,7 @@ export default function MainContent() {
                     <h2 className="text-lg font-semibold text-white text-center">업로드된 비디오</h2>
                   </div>
                   <div className="p-4">
-                    <VideoPlayer ref={videoPlayerRef} src={videoSrc} onTimeUpdate={handleVideoTimeUpdate} />
+                    <VideoPlayer ref={videoPlayerRef} src={videoSrc} subtitles={subtitles} onTimeUpdate={handleVideoTimeUpdate} />
                   </div>
                 </div>
 

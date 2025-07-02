@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer';
 import UnifiedSubtitleViewer from '@/components/UnifiedSubtitleViewer';
@@ -31,12 +31,18 @@ interface ProjectPageContentProps {
 
 export default function ProjectPageContent({ project, parsedSubtitles }: ProjectPageContentProps) {
   const videoPlayerRef = useRef<VideoPlayerRef>(null);
+  const [currentVideoTime, setCurrentVideoTime] = useState(0);
 
-  const handleSubtitleClick = (startTime: number) => {
+  const handleSubtitleClick = useCallback((startTime: number) => {
     if (videoPlayerRef.current) {
       videoPlayerRef.current.jumpToTime(startTime);
     }
-  };
+  }, []);
+
+  const handleVideoTimeUpdate = useCallback((time: number) => {
+    console.log('ProjectPageContent: Video time update received:', time);
+    setCurrentVideoTime(time);
+  }, []);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -130,6 +136,7 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
                     ref={videoPlayerRef}
                     src={project.video_url} 
                     subtitles={parsedSubtitles}
+                    onTimeUpdate={handleVideoTimeUpdate}
                   />
                 </div>
               </div>
@@ -150,6 +157,7 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
             segments={parsedSubtitles}
             onSegmentClick={handleSubtitleClick}
             showOriginal={true}
+            currentTime={currentVideoTime}
           />
         </div>
 
