@@ -12,13 +12,14 @@ interface SubtitleSegment {
 interface VideoPlayerProps {
   src: string;
   subtitles?: SubtitleSegment[];
+  onTimeUpdate?: (currentTime: number) => void;
 }
 
 export interface VideoPlayerRef {
   jumpToTime: (time: number) => void;
 }
 
-const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitles = [] }, ref) => {
+const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitles = [], onTimeUpdate }, ref) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [showSubtitles, setShowSubtitles] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -33,7 +34,9 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
   // Handle video time updates
   const handleTimeUpdate = () => {
     if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
+      const time = videoRef.current.currentTime;
+      setCurrentTime(time);
+      onTimeUpdate?.(time);
     }
   };
 
@@ -106,11 +109,11 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
         </div>
       )}
 
-      {/* Subtitle Progress Indicator */}
+      {/* Enhanced Subtitle Progress Indicator */}
       {subtitles.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700">
+        <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-800 bg-opacity-75 shadow-sm">
           <div 
-            className="h-full bg-blue-600 transition-all duration-100"
+            className="h-full bg-blue-500 shadow-sm transition-all duration-100"
             style={{
               width: `${(currentTime / (subtitles[subtitles.length - 1]?.endTime || 1)) * 100}%`
             }}
