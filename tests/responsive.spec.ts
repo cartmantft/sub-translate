@@ -106,4 +106,116 @@ test.describe('반응형 디자인', () => {
       }
     });
   });
+
+  test.describe('업로드 성공 화면 반응형 테스트', () => {
+    test.beforeEach(async ({ page }) => {
+      // Mock API responses for transcription and translation
+      await page.route('/api/transcribe', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            transcription: 'Sample transcription text for testing.',
+            segments: [
+              { start: 0, end: 3, text: 'Sample transcription text' },
+              { start: 3, end: 6, text: 'for testing.' }
+            ]
+          })
+        });
+      });
+
+      await page.route('/api/translate', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            translatedSegments: [
+              { start: 0, end: 3, text: 'Sample transcription text', translatedText: '테스트용 샘플 전사 텍스트' },
+              { start: 3, end: 6, text: 'for testing.', translatedText: '입니다.' }
+            ]
+          })
+        });
+      });
+
+      await page.route('/api/projects', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            projectId: 'test-project-id-123'
+          })
+        });
+      });
+    });
+
+    test('업로드 성공 화면 레이아웃 - 데스크톱', async ({ page }) => {
+      await page.setViewportSize({ width: 1920, height: 1080 });
+      await page.goto('/');
+      
+      // Mock file upload to trigger success screen
+      const fileInput = page.locator('input[type="file"]');
+      await fileInput.setInputFiles({
+        name: 'test-video.mp4',
+        mimeType: 'video/mp4',
+        buffer: Buffer.from('fake video content')
+      });
+
+      // Wait for success screen to appear
+      await expect(page.getByText('업로드된 비디오')).toBeVisible({ timeout: 10000 });
+      
+      // Check for 2x2 grid layout on desktop
+      const topRow = page.locator('.grid.grid-cols-1.lg\\:grid-cols-2').first();
+      await expect(topRow).toBeVisible();
+      
+      // Verify video and subtitles are in same row
+      await expect(page.getByText('업로드된 비디오')).toBeVisible();
+      
+      // Verify download section and project status are in bottom row
+      await expect(page.getByText('자막이 준비되었습니다!')).toBeVisible();
+      await expect(page.getByText('프로젝트 저장 완료!')).toBeVisible();
+    });
+
+    test('업로드 성공 화면 레이아웃 - 태블릿', async ({ page }) => {
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await page.goto('/');
+      
+      // Mock file upload
+      const fileInput = page.locator('input[type="file"]');
+      await fileInput.setInputFiles({
+        name: 'test-video.mp4',
+        mimeType: 'video/mp4',
+        buffer: Buffer.from('fake video content')
+      });
+
+      // Wait for success screen and verify single column layout
+      await expect(page.getByText('업로드된 비디오')).toBeVisible({ timeout: 10000 });
+      
+      // On tablet, should maintain single column
+      const gridContainer = page.locator('.grid.grid-cols-1.lg\\:grid-cols-2');
+      await expect(gridContainer).toBeVisible();
+    });
+
+    test('업로드 성공 화면 레이아웃 - 모바일', async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
+      await page.goto('/');
+      
+      // Mock file upload
+      const fileInput = page.locator('input[type="file"]');
+      await fileInput.setInputFiles({
+        name: 'test-video.mp4',
+        mimeType: 'video/mp4',
+        buffer: Buffer.from('fake video content')
+      });
+
+      // Wait for success screen and verify mobile layout
+      await expect(page.getByText('업로드된 비디오')).toBeVisible({ timeout: 10000 });
+      
+      // Verify all elements are accessible on mobile
+      await expect(page.getByText('자막이 준비되었습니다!')).toBeVisible();
+      
+      // Check that download buttons are touch-friendly
+      const downloadSection = page.locator('[class*="indigo-50"]').first();
+      await expect(downloadSection).toBeVisible();
+    });
+  });
 });

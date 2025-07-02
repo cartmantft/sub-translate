@@ -105,7 +105,7 @@ export default function UnifiedSubtitleViewer({
       </div>
 
       {/* Content */}
-      <div className="relative" style={{ maxHeight: '60vh' }}>
+      <div className="relative" style={{ maxHeight: '65vh' }}>
         {segments.length > 0 ? (
           <div>
             <div className="mb-4 p-3 bg-blue-50 rounded-lg">
@@ -116,7 +116,7 @@ export default function UnifiedSubtitleViewer({
                 세그먼트를 클릭하면 비디오가 해당 시간으로 이동합니다
               </p>
             </div>
-            <div className="overflow-y-auto pr-2 space-y-3" style={{ maxHeight: '50vh' }}>
+            <div className="overflow-y-auto pr-2 space-y-2" style={{ maxHeight: '55vh' }}>
               {segments.map((segment, index) => (
                 <div 
                   key={segment.id} 
