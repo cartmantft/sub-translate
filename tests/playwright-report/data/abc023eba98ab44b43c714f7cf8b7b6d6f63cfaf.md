@@ -1,0 +1,43 @@
+# Page snapshot
+
+```yaml
+- navigation:
+  - link "SubTranslate":
+    - /url: /
+    - img
+    - text: SubTranslate
+- link "SubTranslate":
+  - /url: /
+  - img
+  - heading "SubTranslate" [level=1]
+- paragraph: 계정에 로그인하여 AI 자막 생성 서비스를 시작하세요
+- heading "로그인" [level=2]
+- paragraph: 새 계정을 만들거나 기존 계정으로 로그인하세요
+- button "Google로 계속하기":
+  - img
+  - text: Google로 계속하기
+- button "Github로 계속하기":
+  - img
+  - text: Github로 계속하기
+- text: 이메일 주소
+- textbox "이메일 주소"
+- text: 비밀번호
+- textbox "비밀번호"
+- button "로그인"
+- link "비밀번호를 잊으셨나요?":
+  - /url: "#auth-forgot-password"
+- link "계정이 없으신가요? 회원가입":
+  - /url: "#auth-sign-up"
+- paragraph: SubTranslate로 할 수 있는 것들
+- img
+- paragraph: 비디오 업로드
+- img
+- paragraph: AI 자막 생성
+- img
+- paragraph: 다국어 번역
+- link "← 홈으로 돌아가기":
+  - /url: /
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

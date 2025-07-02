@@ -1,0 +1,9 @@
+# Ignore all log files
+*.log
+*.log.*
+
+# Ignore PID files
+server-pids.json
+
+# Keep directory
+!.gitkeep

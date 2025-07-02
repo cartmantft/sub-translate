@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 
 interface SubtitleSegment {
   id: string;
@@ -14,26 +14,55 @@ interface UnifiedSubtitleViewerProps {
   segments: SubtitleSegment[];
   onSegmentClick?: (startTime: number) => void;
   showOriginal?: boolean;
+  currentTime?: number;
 }
 
 export default function UnifiedSubtitleViewer({ 
   segments, 
   onSegmentClick, 
-  showOriginal = true 
+  showOriginal = true,
+  currentTime
 }: UnifiedSubtitleViewerProps) {
-  const [activeTab, setActiveTab] = useState<'both' | 'original' | 'translated'>('both');
+  const [activeTab, setActiveTab] = useState<'both' | 'original' | 'translated'>('translated');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const formatTime = (seconds: number) => {
+  const formatTime = useCallback((seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toFixed(0).padStart(2, '0')}`;
-  };
+  }, []);
 
-  const handleSegmentClick = (startTime: number) => {
+  const getCurrentSubtitleIndex = useMemo((): number => {
+    if (currentTime === undefined) return -1;
+    
+    // More robust time matching with small tolerance for floating point precision
+    const tolerance = 0.1;
+    const index = segments.findIndex(
+      segment => currentTime >= (segment.startTime - tolerance) && currentTime <= (segment.endTime + tolerance)
+    );
+    
+    return index;
+  }, [currentTime, segments]);
+
+  const handleSegmentClick = useCallback((startTime: number) => {
     if (onSegmentClick) {
       onSegmentClick(startTime);
     }
-  };
+  }, [onSegmentClick]);
+
+  // Auto-scroll to highlighted subtitle
+  useEffect(() => {
+    if (getCurrentSubtitleIndex >= 0 && scrollContainerRef.current) {
+      const highlightedElement = scrollContainerRef.current.children[getCurrentSubtitleIndex] as HTMLElement;
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
+        });
+      }
+    }
+  }, [getCurrentSubtitleIndex]);
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -53,21 +82,21 @@ export default function UnifiedSubtitleViewer({
         </div>
       </div>
 
-      {/* View Mode Tabs */}
+      {/* View Mode Tabs - Reordered: 번역만 → 원본만 → 원본+번역 */}
       <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
         <button
-          onClick={() => setActiveTab('both')}
+          onClick={() => setActiveTab('translated')}
           className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-            activeTab === 'both'
-              ? 'bg-white text-blue-600 shadow-sm'
+            activeTab === 'translated'
+              ? 'bg-white text-green-600 shadow-sm'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
           <div className="flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
             </svg>
-            원본 + 번역
+            번역만
           </div>
         </button>
         {showOriginal && (
@@ -88,18 +117,18 @@ export default function UnifiedSubtitleViewer({
           </button>
         )}
         <button
-          onClick={() => setActiveTab('translated')}
+          onClick={() => setActiveTab('both')}
           className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-            activeTab === 'translated'
-              ? 'bg-white text-green-600 shadow-sm'
+            activeTab === 'both'
+              ? 'bg-white text-blue-600 shadow-sm'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
           <div className="flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            번역만
+            원본 + 번역
           </div>
         </button>
       </div>
@@ -116,11 +145,15 @@ export default function UnifiedSubtitleViewer({
                 세그먼트를 클릭하면 비디오가 해당 시간으로 이동합니다
               </p>
             </div>
-            <div className="overflow-y-auto pr-2 space-y-2" style={{ maxHeight: '55vh' }}>
+            <div ref={scrollContainerRef} className="overflow-y-auto pr-2 space-y-2" style={{ maxHeight: '55vh' }}>
               {segments.map((segment, index) => (
                 <div 
                   key={segment.id} 
-                  className="group cursor-pointer p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all duration-200"
+                  className={`group cursor-pointer p-4 rounded-xl border transition-all duration-200 ${
+                    getCurrentSubtitleIndex === index
+                      ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200'
+                      : 'border-gray-100 hover:border-blue-200 hover:bg-blue-50'
+                  }`}
                   onClick={() => handleSegmentClick(segment.startTime)}
                 >
                   <div className="flex items-center justify-between mb-3">
