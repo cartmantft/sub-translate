@@ -118,10 +118,10 @@ async function deleteStorageFile(fileUrl: string, bucketName: string, supabase: 
 // PUT method - Update project (edit project name)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const { title } = await request.json();
     
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
@@ -193,7 +193,7 @@ export async function PUT(
   } catch (error) {
     logger.error('Error in PUT /api/projects/[id]', error, { 
       action: 'updateProject',
-      projectId: params.id
+      projectId: 'unknown'
     });
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
@@ -206,10 +206,10 @@ export async function PUT(
 // DELETE method - Delete project and all related resources
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -314,7 +314,7 @@ export async function DELETE(
   } catch (error) {
     logger.error('Error in DELETE /api/projects/[id]', error, { 
       action: 'deleteProject',
-      projectId: params.id
+      projectId: 'unknown'
     });
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(

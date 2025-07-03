@@ -89,20 +89,27 @@ async function validateRequestCsrfToken(request: NextRequest): Promise<{
       }
     }
 
-    // Parse stored token data
+    // Parse stored token data (handle URL decoding if necessary)
     let storedTokenData: CsrfTokenData
     try {
-      storedTokenData = JSON.parse(cookieValue)
+      // Try to decode the cookie value in case it's URL encoded
+      const decodedValue = decodeURIComponent(cookieValue)
+      storedTokenData = JSON.parse(decodedValue)
     } catch {
-      return {
-        isValid: false,
-        error: CSRF_ERRORS.MALFORMED_TOKEN,
-        errorCode: 'CSRF_COOKIE_MALFORMED'
+      // If decoding fails, try parsing as-is
+      try {
+        storedTokenData = JSON.parse(cookieValue)
+      } catch {
+        return {
+          isValid: false,
+          error: CSRF_ERRORS.MALFORMED_TOKEN,
+          errorCode: 'CSRF_COOKIE_MALFORMED'
+        }
       }
     }
 
     // Validate token using timing-safe comparison
-    const isValid = validateCsrfToken(submittedToken, storedTokenData)
+    const isValid = await validateCsrfToken(submittedToken, storedTokenData)
 
     if (!isValid) {
       // Determine if token is expired or just invalid

@@ -43,9 +43,6 @@ export function useCsrfToken(autoRefresh: boolean = true): UseCsrfTokenReturn {
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isRefreshingRef = useRef<boolean>(false)
 
-  /**
-   * Fetches a new CSRF token from the API
-   */
   const fetchToken = useCallback(async (): Promise<void> => {
     // Prevent multiple simultaneous requests
     if (isRefreshingRef.current) {
@@ -104,9 +101,6 @@ export function useCsrfToken(autoRefresh: boolean = true): UseCsrfTokenReturn {
     }
   }, [autoRefresh])
 
-  /**
-   * Schedules automatic token refresh before expiration
-   */
   const scheduleTokenRefresh = useCallback((expires: number) => {
     // Clear existing timeout
     if (refreshTimeoutRef.current) {
@@ -123,6 +117,7 @@ export function useCsrfToken(autoRefresh: boolean = true): UseCsrfTokenReturn {
       fetchToken()
     }, refreshIn)
   }, [fetchToken])
+
 
   /**
    * Manually refresh the CSRF token

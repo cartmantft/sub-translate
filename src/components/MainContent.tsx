@@ -8,6 +8,7 @@ import SubtitleExportButtons from '@/components/SubtitleExportButtons';
 import StepIndicator, { ProcessStep } from '@/components/StepIndicator';
 import toast from 'react-hot-toast';
 import { logger } from '@/lib/utils/logger';
+import { useCsrfToken, fetchWithCsrf } from '@/hooks/useCsrfToken';
 
 interface SubtitleSegment {
   id: string;
@@ -67,6 +68,9 @@ export default function MainContent() {
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<ProcessStep>('upload');
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
+  
+  // CSRF token management for secure API requests
+  const { getToken, error: csrfError } = useCsrfToken();
 
   const handleUploadSuccess = async (url: string) => {
     setVideoSrc(url);
@@ -76,6 +80,10 @@ export default function MainContent() {
     const loadingToastId = toast.loading('음성을 인식하고 있습니다...');
 
     try {
+      // Check for CSRF errors early
+      if (csrfError) {
+        throw new Error(`보안 시스템 오류: ${csrfError}. 페이지를 새로고침하고 다시 시도해주세요.`);
+      }
       // Step 1: Get the video file from the URL to send to transcription API
       const videoResponse = await fetch(url);
       const videoBlob = await videoResponse.blob();
@@ -85,10 +93,13 @@ export default function MainContent() {
       const formData = new FormData();
       formData.append('file', videoFile);
 
-      const transcribeResponse = await fetch('/api/transcribe', {
+      // Get CSRF token for secure API request
+      const csrfToken = await getToken();
+      
+      const transcribeResponse = await fetchWithCsrf('/api/transcribe', {
         method: 'POST',
         body: formData,
-      });
+      }, csrfToken);
 
       const transcribeResult = await transcribeResponse.json();
       if (!transcribeResponse.ok) {
@@ -107,7 +118,7 @@ export default function MainContent() {
       if (whisperSegments && whisperSegments.length > 0) {
         // Translate each Whisper segment individually for better accuracy
         logger.info('Translating individual segments', { component: 'MainContent', action: 'handleUploadSuccess' });
-        const translateResponse = await fetch('/api/translate', {
+        const translateResponse = await fetchWithCsrf('/api/translate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -116,7 +127,7 @@ export default function MainContent() {
             segments: whisperSegments,
             targetLanguage: 'Korean',
           }),
-        });
+        }, csrfToken);
 
         const translateResult = await translateResponse.json();
         if (!translateResponse.ok) {
@@ -134,7 +145,7 @@ export default function MainContent() {
       } else {
         // Fallback: translate entire text for backward compatibility
         logger.info('Translating entire text as fallback', { component: 'MainContent', action: 'handleUploadSuccess' });
-        const translateResponse = await fetch('/api/translate', {
+        const translateResponse = await fetchWithCsrf('/api/translate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -143,7 +154,7 @@ export default function MainContent() {
             text: transcriptionText,
             targetLanguage: 'Korean',
           }),
-        });
+        }, csrfToken);
 
         const translateResult = await translateResponse.json();
         if (!translateResponse.ok) {
@@ -159,7 +170,7 @@ export default function MainContent() {
       setCurrentStep('complete');
 
       // Step 5: Save the project to the database via API route
-      const response = await fetch('/api/projects', {
+      const response = await fetchWithCsrf('/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -171,7 +182,7 @@ export default function MainContent() {
           originalSegments: whisperSegments || [],
           title: `Video Project - ${new Date().toISOString().split('T')[0]}`,
         }),
-      });
+      }, csrfToken);
 
       const result = await response.json();
       if (!response.ok) {
@@ -184,7 +195,16 @@ export default function MainContent() {
 
     } catch (err) {
       logger.error('Error processing video', err, { component: 'MainContent', action: 'handleUploadSuccess', videoUrl: url });
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      
+      let errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      
+      // Handle specific CSRF errors with user-friendly messages
+      if (errorMessage.includes('CSRF') || errorMessage.includes('403')) {
+        errorMessage = '보안 토큰이 만료되었습니다. 페이지를 새로고침하고 다시 시도해주세요.';
+      } else if (errorMessage.includes('401')) {
+        errorMessage = '로그인이 필요합니다. 다시 로그인해주세요.';
+      }
+      
       setError(`비디오 처리 중 오류가 발생했습니다: ${errorMessage}`);
       toast.error(`비디오 처리 실패: ${errorMessage}`, { id: loadingToastId });
     } finally {

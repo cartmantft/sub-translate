@@ -5,8 +5,6 @@
  * to protect against cross-site request forgery attacks.
  */
 
-import { randomBytes, timingSafeEqual } from 'crypto'
-
 // CSRF token configuration
 const CSRF_TOKEN_LENGTH = 32 // 32 bytes = 256 bits of entropy
 const CSRF_TOKEN_TTL = 60 * 60 * 1000 // 1 hour in milliseconds
@@ -17,11 +15,13 @@ export interface CsrfTokenData {
 }
 
 /**
- * Generates a cryptographically secure CSRF token
+ * Generates a cryptographically secure CSRF token using Web Crypto API
  * @returns Base64-encoded random token string
  */
 export function generateCsrfToken(): string {
-  return randomBytes(CSRF_TOKEN_LENGTH).toString('base64')
+  const array = new Uint8Array(CSRF_TOKEN_LENGTH)
+  crypto.getRandomValues(array)
+  return btoa(String.fromCharCode(...array))
 }
 
 /**
@@ -41,12 +41,12 @@ export function createCsrfTokenData(): CsrfTokenData {
  * 
  * @param submittedToken - Token submitted by the client
  * @param storedTokenData - Token data stored in secure cookie
- * @returns True if token is valid and not expired
+ * @returns Promise that resolves to true if token is valid and not expired
  */
-export function validateCsrfToken(
+export async function validateCsrfToken(
   submittedToken: string | null | undefined,
   storedTokenData: CsrfTokenData | null | undefined
-): boolean {
+): Promise<boolean> {
   // Check if both tokens exist
   if (!submittedToken || !storedTokenData) {
     return false
@@ -59,17 +59,65 @@ export function validateCsrfToken(
 
   // Perform timing-safe comparison to prevent timing attacks
   try {
-    const submittedBuffer = Buffer.from(submittedToken, 'base64')
-    const storedBuffer = Buffer.from(storedTokenData.token, 'base64')
+    // Use Web Crypto API for timing-safe comparison
+    return await timingSafeEqual(submittedToken, storedTokenData.token)
+  } catch {
+    // If comparison fails, token is invalid
+    return false
+  }
+}
+
+/**
+ * Timing-safe string comparison using Web Crypto API
+ * This prevents timing attacks by ensuring constant-time comparison
+ */
+async function timingSafeEqual(a: string, b: string): Promise<boolean> {
+  try {
+    // Convert strings to Uint8Arrays
+    const encoder = new TextEncoder()
+    const arrayA = encoder.encode(a)
+    const arrayB = encoder.encode(b)
     
-    // Ensure buffers are the same length before comparison
-    if (submittedBuffer.length !== storedBuffer.length) {
+    // Use subtle crypto for timing-safe comparison
+    const keyA = await crypto.subtle.importKey(
+      'raw',
+      arrayA,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    )
+    
+    const keyB = await crypto.subtle.importKey(
+      'raw', 
+      arrayB,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    )
+    
+    // Create test data for signing
+    const testData = new Uint8Array(1)
+    
+    // Sign with both keys
+    const signatureA = await crypto.subtle.sign('HMAC', keyA, testData)
+    const signatureB = await crypto.subtle.sign('HMAC', keyB, testData)
+    
+    // Compare signatures (timing-safe at the crypto level)
+    const sigArrayA = new Uint8Array(signatureA)
+    const sigArrayB = new Uint8Array(signatureB)
+    
+    if (sigArrayA.length !== sigArrayB.length) {
       return false
     }
     
-    return timingSafeEqual(submittedBuffer, storedBuffer)
-  } catch (error) {
-    // If token is not valid base64, comparison fails
+    // Manual timing-safe comparison as fallback
+    let result = 0
+    for (let i = 0; i < sigArrayA.length; i++) {
+      result |= sigArrayA[i] ^ sigArrayB[i]
+    }
+    
+    return result === 0
+  } catch {
     return false
   }
 }

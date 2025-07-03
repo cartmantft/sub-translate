@@ -6,6 +6,7 @@ import ProjectThumbnail from '@/components/ProjectThumbnail';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { Project } from '@/types';
 import { logger } from '@/lib/utils/logger';
+import { useCsrfToken, fetchWithCsrf } from '@/hooks/useCsrfToken';
 
 interface ProjectCardProps {
   project: Project;
@@ -20,6 +21,9 @@ export default function ProjectCard({ project, onUpdate, onDelete }: ProjectCard
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // CSRF token management for secure API requests
+  const { getToken, error: csrfError } = useCsrfToken();
 
   const handleEditStart = () => {
     setEditTitle(project.title || '');
@@ -48,13 +52,21 @@ export default function ProjectCard({ project, onUpdate, onDelete }: ProjectCard
     setError(null);
 
     try {
-      const response = await fetch(`/api/projects/${project.id}`, {
+      // Check for CSRF errors early
+      if (csrfError) {
+        throw new Error(`보안 시스템 오류: ${csrfError}. 페이지를 새로고침하고 다시 시도해주세요.`);
+      }
+      
+      // Get CSRF token for secure API request
+      const csrfToken = await getToken();
+      
+      const response = await fetchWithCsrf(`/api/projects/${project.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ title: editTitle.trim() }),
-      });
+      }, csrfToken);
 
       const data = await response.json();
 
@@ -67,7 +79,17 @@ export default function ProjectCard({ project, onUpdate, onDelete }: ProjectCard
       setIsEditing(false);
     } catch (error) {
       logger.error('Error updating project', error, { component: 'ProjectCard', action: 'handleEditSave', projectId: project.id });
-      setError(error instanceof Error ? error.message : 'Failed to update project');
+      
+      let errorMessage = error instanceof Error ? error.message : 'Failed to update project';
+      
+      // Handle specific CSRF errors with user-friendly messages
+      if (errorMessage.includes('CSRF') || errorMessage.includes('403')) {
+        errorMessage = '보안 토큰이 만료되었습니다. 페이지를 새로고침하고 다시 시도해주세요.';
+      } else if (errorMessage.includes('401')) {
+        errorMessage = '로그인이 필요합니다. 다시 로그인해주세요.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsUpdating(false);
     }
@@ -83,9 +105,17 @@ export default function ProjectCard({ project, onUpdate, onDelete }: ProjectCard
     setError(null);
 
     try {
-      const response = await fetch(`/api/projects/${project.id}`, {
+      // Check for CSRF errors early
+      if (csrfError) {
+        throw new Error(`보안 시스템 오류: ${csrfError}. 페이지를 새로고침하고 다시 시도해주세요.`);
+      }
+      
+      // Get CSRF token for secure API request
+      const csrfToken = await getToken();
+      
+      const response = await fetchWithCsrf(`/api/projects/${project.id}`, {
         method: 'DELETE',
-      });
+      }, csrfToken);
 
       const data = await response.json();
 
@@ -98,7 +128,17 @@ export default function ProjectCard({ project, onUpdate, onDelete }: ProjectCard
       setIsDeleteModalOpen(false);
     } catch (error) {
       logger.error('Error deleting project', error, { component: 'ProjectCard', action: 'handleDeleteConfirm', projectId: project.id });
-      setError(error instanceof Error ? error.message : 'Failed to delete project');
+      
+      let errorMessage = error instanceof Error ? error.message : 'Failed to delete project';
+      
+      // Handle specific CSRF errors with user-friendly messages
+      if (errorMessage.includes('CSRF') || errorMessage.includes('403')) {
+        errorMessage = '보안 토큰이 만료되었습니다. 페이지를 새로고침하고 다시 시도해주세요.';
+      } else if (errorMessage.includes('401')) {
+        errorMessage = '로그인이 필요합니다. 다시 로그인해주세요.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsDeleting(false);
     }

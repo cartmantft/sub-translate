@@ -6,12 +6,16 @@ import { createClient } from '@/lib/supabase/client';
 import { usePathname } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { logger } from '@/lib/utils/logger';
+import { useCsrfToken, fetchWithCsrf } from '@/hooks/useCsrfToken';
 
 export default function Navigation() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
   const supabase = createClient();
+  
+  // CSRF token management for secure API requests
+  const { getToken, error: csrfError } = useCsrfToken();
 
   useEffect(() => {
     let mounted = true;
@@ -56,10 +60,21 @@ export default function Navigation() {
       // Clear local state immediately
       setUser(null);
       
-      // Call API endpoint to sign out and clear cookies
-      const response = await fetch('/api/auth/signout', {
-        method: 'POST',
-      });
+      // Get CSRF token for secure API request
+      let response;
+      if (csrfError) {
+        logger.warn('CSRF system unavailable during signout, attempting without token', { component: 'Navigation', action: 'handleSignOut', csrfError });
+        // Fallback to regular fetch if CSRF system is unavailable
+        response = await fetch('/api/auth/signout', {
+          method: 'POST',
+        });
+      } else {
+        const csrfToken = await getToken();
+        // Call API endpoint to sign out and clear cookies with CSRF protection
+        response = await fetchWithCsrf('/api/auth/signout', {
+          method: 'POST',
+        }, csrfToken);
+      }
       
       if (!response.ok) {
         logger.error('Failed to sign out', undefined, { component: 'Navigation', action: 'handleSignOut' });

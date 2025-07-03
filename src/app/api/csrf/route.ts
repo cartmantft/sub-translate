@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate token
-    const isValid = validateCsrfToken(submittedToken, storedTokenData)
+    const isValid = await validateCsrfToken(submittedToken, storedTokenData)
     
     if (!isValid) {
       logger.warn('CSRF token validation failed', undefined, {
