@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import VideoThumbnail from './VideoThumbnail';
 import { logger } from '@/lib/utils/logger';
 
@@ -12,10 +12,6 @@ interface ProjectThumbnailProps {
 
 export default function ProjectThumbnail({ thumbnailUrl, videoUrl, title }: ProjectThumbnailProps) {
   const [showVideoFallback, setShowVideoFallback] = useState(false);
-
-  useEffect(() => {
-    logger.debug('ProjectThumbnail props', { component: 'ProjectThumbnail', thumbnailUrl, videoUrl, title });
-  }, [thumbnailUrl, videoUrl, title]);
 
   if (showVideoFallback || !thumbnailUrl || thumbnailUrl.trim() === '') {
     if (videoUrl) {

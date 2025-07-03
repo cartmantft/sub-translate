@@ -130,7 +130,10 @@ export default function LoginPage() {
               }
             }
             
-            setErrorMessage(message);
+            // Use setTimeout to ensure the error is displayed after the Auth component processes
+            setTimeout(() => {
+              setErrorMessage(message);
+            }, 100);
             
             logger.error('Auth request failed', errorData, { 
               component: 'LoginPage',

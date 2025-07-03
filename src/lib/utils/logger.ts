@@ -130,8 +130,9 @@ class Logger {
   safeStringify(obj: unknown): string {
     try {
       return JSON.stringify(obj, (key, value) => {
-        // Mask sensitive keys
-        if (['password', 'secret', 'token', 'key', 'api_key', 'apiKey'].includes(key)) {
+        // Mask sensitive keys (case-insensitive)
+        const sensitiveKeys = ['password', 'secret', 'token', 'key', 'api_key', 'apiKey'];
+        if (sensitiveKeys.some(sensitiveKey => key.toLowerCase().includes(sensitiveKey.toLowerCase()))) {
           return '***';
         }
         return value;

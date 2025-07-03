@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        // Remove protocol prefix from Supabase URL to get hostname for Next.js image optimization
         hostname: process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('https://', '').replace('http://', '') || 'your-supabase-project.supabase.co',
         port: '',
         pathname: '/storage/v1/object/public/**',
