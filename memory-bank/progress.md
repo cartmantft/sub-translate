@@ -107,7 +107,7 @@
 
 **모든 보안 이슈 완료**로 다음 우선순위는 **Issue #23 - [UI/UX] 상세 페이지 자막 편집기 기능 고도화 및 레이아웃 개선**입니다.
 
-### Issue #23 - 자막 편집기 고도화 (진행 중)
+### Issue #23 - 자막 편집기 고도화 (구현 완료, PR 준비)
 - **목표**: 읽기 전용 자막 뷰어를 기능이 풍부한 인라인 편집기로 전환
 - **주요 기능**: 
   - 리사이즈 가능한 분할 패널 (Allotment 라이브러리)
@@ -118,11 +118,14 @@
 - **진행 상황**: 
   - [x] 이슈 분석 및 계획 수립 완료
   - [x] memory-bank/issue-23-subtitle-editor-enhancement.md 작성 완료
-  - [ ] feature 브랜치 생성
-  - [ ] Allotment 라이브러리 설치
-  - [ ] 컴포넌트 구현
-  - [ ] API 라우트 추가
-  - [ ] 테스트 및 검증
+  - [x] feature 브랜치 생성 (feature/issue-23-subtitle-editor-enhancement)
+  - [x] Allotment 라이브러리 설치 및 설정
+  - [x] EnhancedSubtitleEditor 컴포넌트 구현 완료
+  - [x] VideoThumbnail 컴포넌트 시간 파라미터 추가
+  - [x] ProjectPageContent에 리사이즈 가능한 레이아웃 적용
+  - [x] PATCH API 라우트 추가 (/api/projects/[id])
+  - [x] 저장 기능 및 에러 처리 구현
+  - [ ] PR 생성 및 리뷰 요청
 
 ---
 
