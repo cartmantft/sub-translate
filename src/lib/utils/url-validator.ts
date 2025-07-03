@@ -95,17 +95,11 @@ export function validateRedirectUrl(redirectUrl: string, currentOrigin: string):
 
     // Enforce HTTPS in production
     if (config.enforceHttps && parsedUrl.protocol !== 'https:') {
-      console.warn('[Security] Rejected non-HTTPS redirect attempt:', redirectUrl);
       return fallbackUrl;
     }
 
-    // Ensure same-origin redirect
-    if (parsedUrl.origin !== currentOrigin) {
-      console.warn('[Security] Rejected cross-origin redirect attempt:', {
-        attempted: parsedUrl.origin,
-        current: currentOrigin,
-        redirectUrl
-      });
+    // Ensure the current origin is in the allowlist AND the redirect target has the same origin.
+    if (!config.allowedOrigins.includes(currentOrigin) || parsedUrl.origin !== currentOrigin) {
       return fallbackUrl;
     }
 
@@ -118,76 +112,18 @@ export function validateRedirectUrl(redirectUrl: string, currentOrigin: string):
     });
 
     if (!isPathAllowed) {
-      console.warn('[Security] Rejected redirect to disallowed path:', {
-        path: parsedUrl.pathname,
-        allowedPaths: config.allowedPaths,
-        redirectUrl
-      });
       return fallbackUrl;
     }
 
     // Return the validated path (without query params and fragments for security)
     return parsedUrl.pathname;
 
-  } catch (error) {
+  } catch {
     // Handle malformed URLs
-    console.warn('[Security] Rejected malformed URL redirect attempt:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      redirectUrl
-    });
     return fallbackUrl;
   }
 }
 
-/**
- * Creates a safe redirect URL by combining origin with validated path
- * 
- * @param redirectPath - The path to redirect to
- * @param origin - The current origin
- * @returns Complete validated redirect URL
- */
-export function createSafeRedirectUrl(redirectPath: string, origin: string): string {
-  const safePath = validateRedirectUrl(redirectPath, origin);
-  return `${origin}${safePath}`;
-}
-
-/**
- * Validates if a URL is in the allowed origins list
- * 
- * @param url - The URL to check
- * @returns true if the URL origin is allowed
- */
-export function isAllowedOrigin(url: string): boolean {
-  const config = getRedirectConfig();
-  
-  try {
-    const parsedUrl = new URL(url);
-    return config.allowedOrigins.includes(parsedUrl.origin);
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Sanitizes a redirect URL by removing potentially dangerous components
- * 
- * @param redirectUrl - The URL to sanitize
- * @param currentOrigin - The current request origin
- * @returns Sanitized URL
- */
-export function sanitizeRedirectUrl(redirectUrl: string, currentOrigin: string): string {
-  const validatedPath = validateRedirectUrl(redirectUrl, currentOrigin);
-  
-  // Additional sanitization - ensure no javascript: or data: schemes
-  if (validatedPath.toLowerCase().includes('javascript:') || 
-      validatedPath.toLowerCase().includes('data:') ||
-      validatedPath.toLowerCase().includes('vbscript:')) {
-    console.warn('[Security] Rejected redirect with dangerous scheme:', redirectUrl);
-    return '/';
-  }
-
-  return validatedPath;
-}
 
 /**
  * Logs security events for monitoring and analysis
@@ -195,7 +131,7 @@ export function sanitizeRedirectUrl(redirectUrl: string, currentOrigin: string):
  * @param eventType - Type of security event
  * @param details - Event details
  */
-export function logSecurityEvent(eventType: string, details: Record<string, any>): void {
+export function logSecurityEvent(eventType: string, details: Record<string, unknown>): void {
   const timestamp = new Date().toISOString();
   const logEntry = {
     timestamp,
@@ -224,7 +160,7 @@ export function logSecurityEvent(eventType: string, details: Record<string, any>
 export function validateRedirectWithLogging(
   redirectUrl: string, 
   currentOrigin: string,
-  context: { userAgent?: string; ip?: string; route?: string } = {}
+  context: { userAgent?: string; ip?: string; route?: string; [key: string]: unknown } = {}
 ): string {
   const originalUrl = redirectUrl;
   const validatedUrl = validateRedirectUrl(redirectUrl, currentOrigin);

@@ -219,7 +219,7 @@ test.describe('Open Redirect Prevention', () => {
       const callbackUrl = `/auth/callback?code=test-code&next=${encodeURIComponent(maliciousUrl)}`;
       
       await page.goto(callbackUrl);
-      await expect(page).toHaveURL('/');
+      await expect(page).toHaveURL('/auth/auth-code-error');
 
       // Note: Console messages from server-side code won't appear in browser console
       // This test is more for documenting expected behavior
