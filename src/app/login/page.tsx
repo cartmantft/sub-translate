@@ -100,98 +100,83 @@ export default function LoginPage() {
     };
   }, [router, supabase]);
 
-  // Handle authentication errors by monitoring Supabase auth events more directly
+  // Enhanced error handling for Auth UI component
   useEffect(() => {
-    // Monitor for any unhandled promise rejections (common with auth failures)
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      if (event.reason && typeof event.reason === 'object' && 'message' in event.reason) {
-        const message = event.reason.message;
-        if (message.includes('credentials') || message.includes('login') || message.includes('auth')) {
-          setErrorMessage('🔑 로그인 인증에 실패했습니다. 다시 시도해주세요.');
-          logger.error('Unhandled auth promise rejection', event.reason, { component: 'LoginPage' });
+    // Monitor auth state changes for error handling
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN_WITH_PASSWORD' && !session) {
+          // This usually indicates a failed sign-in attempt
+          setErrorMessage('🚫 이메일 또는 비밀번호가 올바르지 않습니다.');
+          logger.warn('Sign in failed - no session created', undefined, { 
+            component: 'LoginPage', 
+            event 
+          });
         }
       }
-    };
-    
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    
-    // Monitor fetch requests for auth errors
+    );
+
+    // Simple fetch monitoring for auth errors
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
       try {
         const response = await originalFetch(...args);
         
-        // Check if this is a Supabase auth request
+        // Monitor Supabase auth endpoints
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
-        if (url.includes('/auth/v1/') && url.includes('token')) {
-          if (!response.ok) {
-            const errorData = await response.clone().json().catch(() => ({}));
-            
-            let message = '로그인 중 오류가 발생했습니다.';
-            
-            // Handle the 400 Bad Request errors specifically
-            if (response.status === 400) {
-              if (errorData.error_description || errorData.message) {
-                const errorText = errorData.error_description || errorData.message;
+        if (url.includes('/auth/v1/token') && !response.ok) {
+          // Use a timeout to ensure the error message shows after any Auth UI processing
+          setTimeout(async () => {
+            try {
+              const errorData = await response.clone().json().catch(() => ({}));
+              let message = '로그인 중 오류가 발생했습니다.';
+              
+              if (response.status === 400) {
+                const errorText = errorData.error_description || errorData.message || '';
                 
                 if (errorText.includes('Invalid login credentials') || 
-                    errorText.includes('invalid_grant') ||
-                    errorText.includes('Invalid user credentials')) {
+                    errorText.includes('invalid_grant')) {
                   message = '🚫 이메일 또는 비밀번호가 올바르지 않습니다.';
                 } else if (errorText.includes('Email not confirmed')) {
                   message = '📧 이메일 인증이 필요합니다. 이메일을 확인해주세요.';
-                } else if (errorText.includes('too many requests') || 
-                          errorText.includes('rate limit')) {
+                } else if (errorText.includes('too many requests')) {
                   message = '⏰ 너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
                 } else {
-                  // For any other 400 error, show generic message but with more detail in dev
-                  message = process.env.NODE_ENV === 'development' 
-                    ? `🔧 개발 모드 에러: ${errorText}`
-                    : '❌ 로그인 정보를 확인해주세요.';
+                  message = '❌ 로그인 정보를 확인해주세요.';
                 }
-              } else {
-                message = '❌ 로그인 요청 처리 중 오류가 발생했습니다.';
               }
+              
+              // Force error message with multiple state updates to ensure visibility
+              setErrorMessage(message);
+              setTimeout(() => setErrorMessage(prev => prev ? message : message), 50);
+              
+              logger.error('Auth request failed', errorData, { 
+                component: 'LoginPage',
+                action: 'auth_request_error',
+                status: response.status,
+                errorDetails: process.env.NODE_ENV === 'development' ? errorData : '[masked]'
+              });
+            } catch (parseError) {
+              logger.error('Error parsing auth error response', parseError, { component: 'LoginPage' });
             }
-            
-            // Show error immediately and with force
-            console.log('🚨 Setting error message:', message);
-            setErrorMessage(message);
-            
-            // Force a re-render to ensure the error message appears
-            setTimeout(() => setErrorMessage(message), 10);
-            
-            logger.error('Auth request failed', errorData, { 
-              component: 'LoginPage',
-              action: 'auth_request_error',
-              url: url.split('?')[0],
-              status: response.status
-            });
-          }
+          }, 100);
         }
         
         return response;
       } catch (error) {
-        // If fetch itself fails
         if (typeof args[0] === 'string' && args[0].includes('/auth/v1/')) {
-          const message = '🌐 네트워크 연결을 확인해주세요.';
-          console.log('🚨 Network error, setting message:', message);
-          setErrorMessage(message);
-          
-          logger.error('Network error during auth', error, { 
-            component: 'LoginPage',
-            action: 'network_error'
-          });
+          setErrorMessage('🌐 네트워크 연결을 확인해주세요.');
+          logger.error('Network error during auth', error, { component: 'LoginPage' });
         }
         throw error;
       }
     };
     
     return () => {
+      authListener.subscription.unsubscribe();
       window.fetch = originalFetch;
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
-  }, []);
+  }, [supabase]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4">
@@ -225,31 +210,41 @@ export default function LoginPage() {
 
           {/* Card Content */}
           <div className="p-8">
-            {/* Error Message - Enhanced visibility with animation */}
-            {errorMessage && (
-              <div className="mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-lg animate-pulse">
-                <div className="flex items-start">
-                  <svg className="w-7 h-7 text-red-500 mr-3 mt-0.5 flex-shrink-0 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div className="flex-1">
-                    <div className="bg-red-600 text-white text-sm font-bold px-2 py-1 rounded mb-2 inline-block">
-                      ⚠️ 로그인 오류
-                    </div>
-                    <p className="text-red-800 text-base font-semibold leading-relaxed">{errorMessage}</p>
-                    <button
-                      onClick={() => setErrorMessage(null)}
-                      className="mt-3 inline-flex items-center px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium rounded-md transition-colors"
-                    >
-                      <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      닫기
-                    </button>
+            {/* Error Message - Enhanced visibility with forced rendering */}
+            <div 
+              className={`mb-6 transition-all duration-300 ${
+                errorMessage 
+                  ? 'opacity-100 max-h-96 p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-lg' 
+                  : 'opacity-0 max-h-0 overflow-hidden'
+              }`}
+              style={{ 
+                visibility: errorMessage ? 'visible' : 'hidden',
+                display: errorMessage ? 'block' : 'none'
+              }}
+            >
+              <div className="flex items-start">
+                <svg className="w-7 h-7 text-red-500 mr-3 mt-0.5 flex-shrink-0 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <div className="bg-red-600 text-white text-sm font-bold px-2 py-1 rounded mb-2 inline-block animate-pulse">
+                    ⚠️ 로그인 오류
                   </div>
+                  <p className="text-red-800 text-base font-semibold leading-relaxed">
+                    {errorMessage || '로그인 중 오류가 발생했습니다.'}
+                  </p>
+                  <button
+                    onClick={() => setErrorMessage(null)}
+                    className="mt-3 inline-flex items-center px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium rounded-md transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    닫기
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
 
             <Auth
               supabaseClient={supabase}
