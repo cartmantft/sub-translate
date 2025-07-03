@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import crypto from 'crypto';
+import { logger } from '@/lib/utils/logger';
 
 // Thumbnail generation function - server-side implementation with ffmpeg
 async function generateThumbnail(videoUrl: string, supabase: Awaited<ReturnType<typeof createClient>>): Promise<string | null> {
@@ -40,7 +41,10 @@ async function generateThumbnail(videoUrl: string, supabase: Awaited<ReturnType<
       
       // Check if thumbnail was created
       if (!fs.existsSync(tempThumbnailPath)) {
-        console.error('Thumbnail file was not created');
+        logger.error('Thumbnail file was not created', undefined, { 
+          action: 'generateThumbnail',
+          videoUrl
+        });
         return null;
       }
       
@@ -61,7 +65,11 @@ async function generateThumbnail(videoUrl: string, supabase: Awaited<ReturnType<
         });
       
       if (uploadError) {
-        console.error('Storage upload error:', uploadError);
+        logger.error('Storage upload error', uploadError, { 
+          action: 'generateThumbnail',
+          operation: 'uploadThumbnail',
+          bucketName: 'videos'
+        });
         // Clean up and return null on upload failure
         try {
           fs.unlinkSync(tempThumbnailPath);
@@ -92,7 +100,11 @@ async function generateThumbnail(videoUrl: string, supabase: Awaited<ReturnType<
       return thumbnailUrl;
       
     } catch (ffmpegError) {
-      console.error('FFmpeg error:', ffmpegError);
+      logger.error('FFmpeg error', ffmpegError, { 
+        action: 'generateThumbnail',
+        operation: 'extractFrame',
+        videoUrl
+      });
       
       // Clean up temp files if they exist
       try {
@@ -110,7 +122,10 @@ async function generateThumbnail(videoUrl: string, supabase: Awaited<ReturnType<
     }
     
   } catch (error) {
-    console.error('Error in thumbnail generation:', error);
+    logger.error('Error in thumbnail generation', error, { 
+      action: 'generateThumbnail',
+      videoUrl
+    });
     return null;
   }
 }
@@ -141,14 +156,19 @@ export async function POST(request: Request) {
     ]).select();
 
     if (error) {
-      console.error('Error saving project to DB:', error);
+      logger.error('Error saving project to DB', error, { 
+        action: 'createProject',
+        userId: user.id
+      });
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, projectId: data[0].id }, { status: 201 });
 
   } catch (error) {
-    console.error('Error in projects API route:', error);
+    logger.error('Error in projects API route', error, { 
+      action: 'createProject'
+    });
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ success: false, error: 'Internal Server Error', details: errorMessage }, { status: 500 });
   }

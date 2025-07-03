@@ -3,20 +3,70 @@
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { createClient } from '@/lib/supabase/client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { logger } from '@/lib/utils/logger';
 
 export default function LoginPage() {
   const supabase = createClient();
   const router = useRouter();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    // Check for error messages in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+    
+    if (error) {
+      let message = '로그인 중 오류가 발생했습니다.';
+      
+      switch (error) {
+        case 'invalid_credentials':
+        case 'invalid_grant':
+          message = '이메일 또는 비밀번호가 올바르지 않습니다.';
+          break;
+        case 'email_not_confirmed':
+          message = '이메일 인증이 필요합니다. 이메일을 확인해주세요.';
+          break;
+        case 'too_many_requests':
+          message = '너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
+          break;
+        case 'signup_disabled':
+          message = '현재 회원가입이 비활성화되어 있습니다.';
+          break;
+        case 'access_denied':
+          message = '로그인이 취소되었습니다.';
+          break;
+        default:
+          if (errorDescription) {
+            message = process.env.NODE_ENV === 'development' 
+              ? errorDescription 
+              : '로그인 중 오류가 발생했습니다. 다시 시도해주세요.';
+          }
+      }
+      
+      setErrorMessage(message);
+      logger.warn('Login error from URL params', undefined, { 
+        component: 'LoginPage', 
+        error, 
+        errorDescription: process.env.NODE_ENV === 'development' ? errorDescription : '[masked]'
+      });
+      
+      // Clean up URL params
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Check if user is already logged in
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        router.push('/dashboard');
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          router.push('/dashboard');
+        }
+      } catch (error) {
+        logger.error('Session check failed', error, { component: 'LoginPage' });
       }
     };
     
@@ -24,9 +74,22 @@ export default function LoginPage() {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        logger.debug('Auth state change', { 
+          component: 'LoginPage', 
+          event, 
+          hasSession: !!session 
+        });
+        
         if (event === 'SIGNED_IN' && session) {
-          // User just signed in, redirect to dashboard
+          setErrorMessage(null);
           router.push('/dashboard');
+        } else if (event === 'SIGNED_OUT') {
+          // Clear any existing error messages on sign out
+          setErrorMessage(null);
+        } else if (event === 'TOKEN_REFRESHED') {
+          setErrorMessage(null);
+        } else if (event === 'PASSWORD_RECOVERY') {
+          setErrorMessage(null);
         }
       }
     );
@@ -36,6 +99,84 @@ export default function LoginPage() {
       authListener.subscription.unsubscribe();
     };
   }, [router, supabase]);
+
+  // Enhanced error handling for Auth UI component
+  useEffect(() => {
+    // Monitor auth state changes for error handling
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN_WITH_PASSWORD' && !session) {
+          // This usually indicates a failed sign-in attempt
+          setErrorMessage('🚫 이메일 또는 비밀번호가 올바르지 않습니다.');
+          logger.warn('Sign in failed - no session created', undefined, { 
+            component: 'LoginPage', 
+            event 
+          });
+        }
+      }
+    );
+
+    // Simple fetch monitoring for auth errors
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      try {
+        const response = await originalFetch(...args);
+        
+        // Monitor Supabase auth endpoints
+        const url = typeof args[0] === 'string' ? args[0] : args[0].url;
+        if (url.includes('/auth/v1/token') && !response.ok) {
+          // Use a timeout to ensure the error message shows after any Auth UI processing
+          setTimeout(async () => {
+            try {
+              const errorData = await response.clone().json().catch(() => ({}));
+              let message = '로그인 중 오류가 발생했습니다.';
+              
+              if (response.status === 400) {
+                const errorText = errorData.error_description || errorData.message || '';
+                
+                if (errorText.includes('Invalid login credentials') || 
+                    errorText.includes('invalid_grant')) {
+                  message = '🚫 이메일 또는 비밀번호가 올바르지 않습니다.';
+                } else if (errorText.includes('Email not confirmed')) {
+                  message = '📧 이메일 인증이 필요합니다. 이메일을 확인해주세요.';
+                } else if (errorText.includes('too many requests')) {
+                  message = '⏰ 너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
+                } else {
+                  message = '❌ 로그인 정보를 확인해주세요.';
+                }
+              }
+              
+              // Force error message with multiple state updates to ensure visibility
+              setErrorMessage(message);
+              setTimeout(() => setErrorMessage(prev => prev ? message : message), 50);
+              
+              logger.error('Auth request failed', errorData, { 
+                component: 'LoginPage',
+                action: 'auth_request_error',
+                status: response.status,
+                errorDetails: process.env.NODE_ENV === 'development' ? errorData : '[masked]'
+              });
+            } catch (parseError) {
+              logger.error('Error parsing auth error response', parseError, { component: 'LoginPage' });
+            }
+          }, 100);
+        }
+        
+        return response;
+      } catch (error) {
+        if (typeof args[0] === 'string' && args[0].includes('/auth/v1/')) {
+          setErrorMessage('🌐 네트워크 연결을 확인해주세요.');
+          logger.error('Network error during auth', error, { component: 'LoginPage' });
+        }
+        throw error;
+      }
+    };
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+      window.fetch = originalFetch;
+    };
+  }, [supabase]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4">
@@ -69,8 +210,45 @@ export default function LoginPage() {
 
           {/* Card Content */}
           <div className="p-8">
+            {/* Error Message - Enhanced visibility with forced rendering */}
+            <div 
+              className={`mb-6 transition-all duration-300 ${
+                errorMessage 
+                  ? 'opacity-100 max-h-96 p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-lg' 
+                  : 'opacity-0 max-h-0 overflow-hidden'
+              }`}
+              style={{ 
+                visibility: errorMessage ? 'visible' : 'hidden',
+                display: errorMessage ? 'block' : 'none'
+              }}
+            >
+              <div className="flex items-start">
+                <svg className="w-7 h-7 text-red-500 mr-3 mt-0.5 flex-shrink-0 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <div className="bg-red-600 text-white text-sm font-bold px-2 py-1 rounded mb-2 inline-block animate-pulse">
+                    ⚠️ 로그인 오류
+                  </div>
+                  <p className="text-red-800 text-base font-semibold leading-relaxed">
+                    {errorMessage || '로그인 중 오류가 발생했습니다.'}
+                  </p>
+                  <button
+                    onClick={() => setErrorMessage(null)}
+                    className="mt-3 inline-flex items-center px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium rounded-md transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    닫기
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <Auth
               supabaseClient={supabase}
+              onlyThirdPartyProviders={false}
               appearance={{
                 theme: ThemeSupa,
                 style: {

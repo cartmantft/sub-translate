@@ -7,6 +7,7 @@ import UnifiedSubtitleViewer from '@/components/UnifiedSubtitleViewer';
 import SubtitleExportButtons from '@/components/SubtitleExportButtons';
 import StepIndicator, { ProcessStep } from '@/components/StepIndicator';
 import toast from 'react-hot-toast';
+import { logger } from '@/lib/utils/logger';
 
 interface SubtitleSegment {
   id: string;
@@ -105,7 +106,7 @@ export default function MainContent() {
       
       if (whisperSegments && whisperSegments.length > 0) {
         // Translate each Whisper segment individually for better accuracy
-        console.log('Translating individual segments...');
+        logger.info('Translating individual segments', { component: 'MainContent', action: 'handleUploadSuccess' });
         const translateResponse = await fetch('/api/translate', {
           method: 'POST',
           headers: {
@@ -132,7 +133,7 @@ export default function MainContent() {
         }));
       } else {
         // Fallback: translate entire text for backward compatibility
-        console.log('Translating entire text as fallback...');
+        logger.info('Translating entire text as fallback', { component: 'MainContent', action: 'handleUploadSuccess' });
         const translateResponse = await fetch('/api/translate', {
           method: 'POST',
           headers: {
@@ -179,10 +180,10 @@ export default function MainContent() {
 
       toast.success('프로젝트가 성공적으로 저장되었습니다!', { id: loadingToastId });
       setProjectId(result.projectId);
-      console.log('Project saved with ID:', result.projectId);
+      logger.info('Project saved successfully', { component: 'MainContent', action: 'handleUploadSuccess', projectId: result.projectId });
 
     } catch (err) {
-      console.error('Error processing video:', err);
+      logger.error('Error processing video', err, { component: 'MainContent', action: 'handleUploadSuccess', videoUrl: url });
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(`비디오 처리 중 오류가 발생했습니다: ${errorMessage}`);
       toast.error(`비디오 처리 실패: ${errorMessage}`, { id: loadingToastId });

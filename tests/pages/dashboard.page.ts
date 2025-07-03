@@ -28,6 +28,15 @@ export class DashboardPage extends BasePage {
     return this.page.locator('.bg-white').filter({ hasText: '최근 업데이트' });
   }
 
+  // 검색 및 필터
+  get searchInput(): Locator {
+    return this.page.locator('input[placeholder*="검색"]');
+  }
+
+  get sortDropdown(): Locator {
+    return this.page.locator('select').filter({ hasText: /정렬/ });
+  }
+
   // 프로젝트 목록
   get projectGrid(): Locator {
     return this.page.locator('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3');
@@ -73,6 +82,71 @@ export class DashboardPage extends BasePage {
     await projectCard.getByRole('button', { name: '프로젝트 보기' }).click();
   }
 
+  // 프로젝트 편집/삭제 액션
+  async editProjectName(oldTitle: string, newTitle: string): Promise<void> {
+    const projectCard = this.projectCards.filter({ hasText: oldTitle });
+    await projectCard.hover();
+    
+    // 다양한 방법으로 편집 버튼 찾기
+    const editButton = projectCard.getByTestId('edit-button')
+      .or(projectCard.locator('button[aria-label="편집"]'))
+      .or(projectCard.getByRole('button', { name: '편집' }));
+    
+    await editButton.click();
+    
+    const input = projectCard.locator('input[type="text"]')
+      .or(projectCard.locator(`input[value="${oldTitle}"]`));
+    
+    await input.clear();
+    await input.fill(newTitle);
+    
+    const saveButton = projectCard.getByTestId('save-button')
+      .or(projectCard.locator('button[aria-label="저장"]'))
+      .or(projectCard.getByRole('button', { name: '저장' }));
+    
+    await saveButton.click();
+  }
+
+  async deleteProject(title: string): Promise<void> {
+    const projectCard = this.projectCards.filter({ hasText: title });
+    await projectCard.hover();
+    
+    // 다양한 방법으로 삭제 버튼 찾기
+    const deleteButton = projectCard.getByTestId('delete-button')
+      .or(projectCard.locator('button[aria-label="삭제"]'))
+      .or(projectCard.getByRole('button', { name: '삭제' }));
+    
+    await deleteButton.click();
+    
+    // 삭제 확인 모달 처리
+    const confirmDialog = this.page.locator('[role="dialog"]')
+      .or(this.page.getByText('정말 삭제하시겠습니까?'));
+    
+    await confirmDialog.waitFor({ state: 'visible' });
+    
+    const confirmButton = this.page.getByTestId('confirm-delete-button')
+      .or(this.page.getByRole('button', { name: '삭제' }));
+    
+    await confirmButton.click();
+  }
+
+  async cancelDeleteProject(title: string): Promise<void> {
+    const projectCard = this.projectCards.filter({ hasText: title });
+    await projectCard.hover();
+    
+    const deleteButton = projectCard.getByTestId('delete-button')
+      .or(projectCard.locator('button[aria-label="삭제"]'))
+      .or(projectCard.getByRole('button', { name: '삭제' }));
+    
+    await deleteButton.click();
+    
+    // 삭제 취소
+    const cancelButton = this.page.getByTestId('cancel-delete-button')
+      .or(this.page.getByRole('button', { name: '취소' }));
+    
+    await cancelButton.click();
+  }
+
   async getProjectTitles(): Promise<string[]> {
     const projectCount = await this.getProjectCount();
     if (projectCount === 0) return [];
@@ -102,5 +176,22 @@ export class DashboardPage extends BasePage {
     } catch {
       return false;
     }
+  }
+
+  // 검색 및 필터 액션
+  async searchProjects(query: string): Promise<void> {
+    await this.searchInput.fill(query);
+    await this.page.keyboard.press('Enter');
+    await this.waitForLoadingToFinish();
+  }
+
+  async sortProjects(sortBy: 'newest' | 'oldest' | 'name'): Promise<void> {
+    await this.sortDropdown.selectOption(sortBy);
+    await this.waitForLoadingToFinish();
+  }
+
+  // 로딩 상태 관리
+  async waitForProjectsToLoad(): Promise<void> {
+    await this.page.waitForSelector('.bg-white.rounded-2xl', { state: 'visible' });
   }
 }

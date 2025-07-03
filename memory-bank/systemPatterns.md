@@ -68,3 +68,31 @@ graph TD
 - ✅ 프런트엔드-백엔드 분리 원칙 준수
 - ✅ Serverless 함수의 이점을 완전 활용
 - ✅ Page Object Model로 테스트 안정성 보장
+
+## 🚨 개발 환경 관리 원칙 (CRITICAL WORKFLOW)
+
+### 서버 실행 우선순위
+1. **ALWAYS use Server Management commands from CLAUDE.md**
+2. **NEVER directly run `npm run dev` unless explicitly instructed**  
+3. **ALWAYS check server status before starting new processes**
+
+### 필수 워크플로우
+1. `npm run servers:status` - 현재 서버 상태 확인
+2. `npm run servers:cleanup` - 기존 프로세스 정리  
+3. `npm run servers:start` - 올바른 서버 시작
+
+### 포트 충돌 방지
+- 직접 `npm run dev` 실행 시 포트 3000 충돌 위험
+- 정의된 서버 관리 스크립트 사용으로 안정성 확보
+- 개발 환경 일관성 유지
+
+### CLAUDE.md 우선 참조 원칙
+- 모든 명령어 실행 전 CLAUDE.md 확인 필수
+- Server Management 섹션의 명령어가 Essential Commands보다 우선
+- 서버 관리 워크플로우: status → cleanup → start 순서 준수
+
+### 메모리 뱅크 업데이트 정의
+**"메모리 뱅크 업데이트"** (Korean) / **"update memory bank"** (English) includes:
+- CLAUDE.md 파일 업데이트
+- memory-bank/ 폴더의 모든 마크다운 파일 업데이트
+- 프로젝트 패턴, 워크플로우, 중요한 결정사항 문서화

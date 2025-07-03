@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import MainContent from '@/components/MainContent';
+import { logger } from '@/lib/utils/logger';
 
 export default async function Home() {
   const supabase = await createClient();
@@ -13,7 +14,10 @@ export default async function Home() {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
-      console.error('Session error:', sessionError);
+      logger.error('Session error during authentication check', sessionError, {
+        component: 'HomePage',
+        action: 'session_check'
+      });
       user = null;
     } else if (session) {
       // 세션이 있을 경우에만 getUser 호출하여 유효성 검증
@@ -21,7 +25,10 @@ export default async function Home() {
       
       if (userError || !authUser) {
         // 세션은 있지만 유효하지 않음
-        console.error('Invalid session:', userError);
+        logger.error('Invalid session detected', userError, {
+          component: 'HomePage',
+          action: 'session_validation'
+        });
         await supabase.auth.signOut();
         user = null;
       } else {
@@ -29,7 +36,10 @@ export default async function Home() {
       }
     }
   } catch (error) {
-    console.error('Auth check error:', error);
+    logger.error('Auth check error', error, {
+      component: 'HomePage',
+      action: 'auth_check'
+    });
     user = null;
   }
 

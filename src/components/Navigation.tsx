@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { usePathname } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
+import { logger } from '@/lib/utils/logger';
 
 export default function Navigation() {
   const [user, setUser] = useState<User | null>(null);
@@ -25,7 +26,7 @@ export default function Navigation() {
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error getting session:', error);
+        logger.error('Error getting session', error, { component: 'Navigation', action: 'initializeAuth' });
         if (mounted) {
           setLoading(false);
         }
@@ -61,13 +62,13 @@ export default function Navigation() {
       });
       
       if (!response.ok) {
-        console.error('Failed to sign out');
+        logger.error('Failed to sign out', undefined, { component: 'Navigation', action: 'handleSignOut' });
       }
       
       // Force a complete page reload to clear all state
       window.location.href = '/';
     } catch (error) {
-      console.error('Unexpected error during sign out:', error);
+      logger.error('Unexpected error during sign out', error, { component: 'Navigation', action: 'handleSignOut' });
       // Still try to redirect even if there's an error
       window.location.href = '/';
     }

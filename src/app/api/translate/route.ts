@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { logger } from '@/lib/utils/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-      console.error('Google API key not found');
+      logger.error('Google API key not found', undefined, { action: 'translate' });
       return NextResponse.json({ error: 'Google API key not configured' }, { status: 500 });
     }
 
@@ -55,7 +56,11 @@ export async function POST(request: NextRequest) {
             translatedText: translatedText
           };
         } catch (error) {
-          console.error(`Translation error for segment: ${segment.text}`, error);
+          logger.error('Translation error for segment', error, { 
+            action: 'translateSegment',
+            segmentText: segment.text.substring(0, 50) + '...',
+            targetLanguage
+          });
           // Fallback to original text if translation fails
           return {
             ...segment,
@@ -82,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Translation API error:', error);
+    logger.error('Translation API error', error, { action: 'translate' });
     return NextResponse.json(
       { error: 'Translation failed' }, 
       { status: 500 }

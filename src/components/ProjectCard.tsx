@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ProjectThumbnail from '@/components/ProjectThumbnail';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { Project } from '@/types';
+import { logger } from '@/lib/utils/logger';
 
 interface ProjectCardProps {
   project: Project;
@@ -65,7 +66,7 @@ export default function ProjectCard({ project, onUpdate, onDelete }: ProjectCard
       onUpdate(data.project);
       setIsEditing(false);
     } catch (error) {
-      console.error('Error updating project:', error);
+      logger.error('Error updating project', error, { component: 'ProjectCard', action: 'handleEditSave', projectId: project.id });
       setError(error instanceof Error ? error.message : 'Failed to update project');
     } finally {
       setIsUpdating(false);
@@ -96,7 +97,7 @@ export default function ProjectCard({ project, onUpdate, onDelete }: ProjectCard
       onDelete(project.id);
       setIsDeleteModalOpen(false);
     } catch (error) {
-      console.error('Error deleting project:', error);
+      logger.error('Error deleting project', error, { component: 'ProjectCard', action: 'handleDeleteConfirm', projectId: project.id });
       setError(error instanceof Error ? error.message : 'Failed to delete project');
     } finally {
       setIsDeleting(false);

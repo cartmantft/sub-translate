@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/utils/logger';
 
 // Helper function to extract file path from Supabase Storage URL
 function extractStorageFilePath(url: string): string | null {
@@ -24,7 +25,7 @@ function extractStorageFilePath(url: string): string | null {
     
     return null;
   } catch (error) {
-    console.error('Error parsing storage URL:', error);
+    logger.error('Error parsing storage URL', error, { action: 'extractStorageFilePath', url });
     return null;
   }
 }
@@ -66,13 +67,21 @@ async function deleteStorageFile(fileUrl: string, bucketName: string, supabase: 
     console.log(`   - error:`, deleteError);
     
     if (deleteError) {
-      console.error(`❌ Delete API returned error:`, deleteError);
-      console.error(`   Error details:`, JSON.stringify(deleteError, null, 2));
+      logger.error('Delete API returned error', deleteError, { 
+        action: 'deleteStorageFile',
+        bucketName,
+        filePath,
+        errorDetails: logger.safeStringify(deleteError)
+      });
+      
       
       // Check for specific permission errors
       if (deleteError.message?.includes('access') || deleteError.message?.includes('permission')) {
-        console.error(`🚫 PERMISSION ERROR: Likely missing RLS policy for DELETE on videos bucket`);
-        console.error(`   Required policy: bucket_id = 'videos' AND owner = auth.uid()::text`);
+        logger.error('PERMISSION ERROR: Likely missing RLS policy for DELETE on videos bucket', deleteError, {
+          action: 'deleteStorageFile',
+          bucketName,
+          requiredPolicy: "bucket_id = 'videos' AND owner = auth.uid()::text"
+        });
       }
       return false;
     }
@@ -101,7 +110,7 @@ async function deleteStorageFile(fileUrl: string, bucketName: string, supabase: 
       return false;
     }
   } catch (error) {
-    console.error('❌ Unexpected error in deleteStorageFile:', error);
+    logger.error('Unexpected error in deleteStorageFile', error, { action: 'deleteStorageFile', fileUrl });
     return false;
   }
 }
@@ -165,7 +174,11 @@ export async function PUT(
       .single();
 
     if (updateError) {
-      console.error('Error updating project:', updateError);
+      logger.error('Error updating project', updateError, { 
+        action: 'updateProject',
+        projectId: id,
+        userId: user.id
+      });
       return NextResponse.json(
         { success: false, error: 'Failed to update project' },
         { status: 500 }
@@ -178,7 +191,10 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('Error in PUT /api/projects/[id]:', error);
+    logger.error('Error in PUT /api/projects/[id]', error, { 
+      action: 'updateProject',
+      projectId: params.id
+    });
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
       { success: false, error: 'Internal Server Error', details: errorMessage },
@@ -256,8 +272,11 @@ export async function DELETE(
       .eq('user_id', user.id); // Double-check ownership
 
     if (deleteError) {
-      console.error('Failed to delete project from database:', deleteError);
-      console.error('Error deleting project from database:', deleteError);
+      logger.error('Failed to delete project from database', deleteError, {
+        action: 'deleteProject',
+        projectId: id,
+        userId: user.id
+      });
       return NextResponse.json(
         { 
           success: false, 
@@ -293,7 +312,10 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('Error in DELETE /api/projects/[id]:', error);
+    logger.error('Error in DELETE /api/projects/[id]', error, { 
+      action: 'deleteProject',
+      projectId: params.id
+    });
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
       { success: false, error: 'Internal Server Error', details: errorMessage },
