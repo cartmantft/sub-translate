@@ -210,8 +210,8 @@ export async function PATCH(
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;
+  const { id } = params;
   try {
-    const { id } = params;
     const { subtitles } = await request.json();
     
     if (!subtitles || !Array.isArray(subtitles)) {
@@ -295,7 +295,7 @@ export async function PATCH(
   } catch (error) {
     logger.error('Error in PATCH /api/projects/[id]', error, { 
       action: 'updateProjectSubtitles',
-      projectId: 'unknown'
+      projectId: id
     });
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(

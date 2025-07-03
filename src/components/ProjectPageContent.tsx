@@ -123,8 +123,23 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
         </div>
 
         {/* Main Content Layout with Resizable Panels */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" style={{ height: 'calc(100vh - 400px)', minHeight: '500px' }}>
-          <Allotment minSize={300}>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-[calc(100vh-400px)] min-h-[500px] relative">
+          <div className="absolute top-4 right-4 z-10 bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-medium">
+            👆 드래그하여 크기 조절
+          </div>
+          <Allotment 
+            minSize={300}
+            split="vertical"
+            resizerStyle={{
+              width: '8px',
+              backgroundColor: '#e5e7eb',
+              border: '2px solid #3b82f6',
+              borderRadius: '4px',
+              cursor: 'col-resize',
+              transition: 'all 0.2s ease',
+              position: 'relative'
+            }}
+          >
             {/* Video Player Panel */}
             <Allotment.Pane minSize={300} maxSize={700}>
               <div className="h-full p-6 bg-white">

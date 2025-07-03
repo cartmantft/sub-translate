@@ -47,9 +47,9 @@ export default function EnhancedSubtitleEditor({
     setSegments(initialSegments);
   }, [initialSegments]);
 
-  // Auto-scroll to current segment
+  // Auto-scroll to current segment (but not while editing)
   useEffect(() => {
-    if (!containerRef.current || currentTime === undefined) return;
+    if (!containerRef.current || currentTime === undefined || editingId !== null) return;
 
     const currentSegmentIndex = segments.findIndex(
       segment => currentTime >= segment.startTime && currentTime <= segment.endTime
@@ -66,7 +66,7 @@ export default function EnhancedSubtitleEditor({
         });
       }
     }
-  }, [currentTime, segments]);
+  }, [currentTime, segments, editingId]);
 
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -130,51 +130,54 @@ export default function EnhancedSubtitleEditor({
            currentTime <= segment.endTime;
   };
 
+  const handleSave = async () => {
+    setSaveError(null);
+    setIsSaving(true);
+    
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
+        },
+        body: JSON.stringify({ subtitles: segments })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save subtitles');
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        setIsDirty(false);
+        console.log('Subtitles saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving subtitles:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to save changes');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Header with save button */}
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <h2 className="text-xl font-semibold">자막 편집기</h2>
-        {isDirty && (
-          <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={async () => {
-              setSaveError(null);
-              setIsSaving(true);
-              
-              try {
-                const response = await fetch(`/api/projects/${projectId}`, {
-                  method: 'PATCH',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
-                  },
-                  body: JSON.stringify({ subtitles: segments })
-                });
-                
-                if (!response.ok) {
-                  const errorData = await response.json();
-                  throw new Error(errorData.error || 'Failed to save subtitles');
-                }
-                
-                const data = await response.json();
-                if (data.success) {
-                  setIsDirty(false);
-                  // Show success feedback - you might want to add a toast notification here
-                  console.log('Subtitles saved successfully');
-                }
-              } catch (error) {
-                console.error('Error saving subtitles:', error);
-                setSaveError(error instanceof Error ? error.message : 'Failed to save changes');
-              } finally {
-                setIsSaving(false);
-              }
-            }}
-            disabled={isSaving}
-          >
-            {isSaving ? '저장 중...' : '변경사항 저장'}
-          </button>
-        )}
+        <button
+          className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium disabled:cursor-not-allowed ${
+            isDirty
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+          } ${isSaving ? 'opacity-50' : ''}`}
+          onClick={handleSave}
+          disabled={!isDirty || isSaving}
+        >
+          {isSaving ? '저장 중...' : '변경사항 저장'}
+        </button>
       </div>
 
       {/* Error message */}
@@ -271,10 +274,13 @@ export default function EnhancedSubtitleEditor({
                   {/* Primary text */}
                   {primary && (
                     <div className="mb-2">
-                      {isEditing && viewMode !== 'original' ? (
+                      {isEditing ? (
                         <textarea
                           value={primary}
-                          onChange={(e) => handleTextChange(segment.id, 'text', e.target.value)}
+                          onChange={(e) => {
+                            const field = viewMode === 'original' ? 'originalText' : 'text';
+                            handleTextChange(segment.id, field, e.target.value);
+                          }}
                           onBlur={stopEditing}
                           className="w-full p-2 border border-blue-300 rounded text-sm resize-y min-h-[60px] focus:outline-none focus:ring-2 focus:ring-blue-500"
                           autoFocus
@@ -282,7 +288,7 @@ export default function EnhancedSubtitleEditor({
                       ) : (
                         <div
                           className="text-sm text-gray-800 cursor-pointer hover:bg-gray-50 rounded p-2 -m-2"
-                          onClick={() => viewMode !== 'original' && startEditing(segment.id)}
+                          onClick={() => startEditing(segment.id)}
                         >
                           {primary}
                         </div>

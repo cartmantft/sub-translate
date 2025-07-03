@@ -97,18 +97,29 @@ export default function VideoThumbnail({ videoUrl, alt, className = '', time }: 
     }, 8000);
 
     const handleLoadedData = () => {
-      // Use provided time or default to 5% of duration (max 0.5s)
-      const seekTime = time !== undefined 
-        ? Math.min(time, video.duration) 
-        : Math.min(video.duration * 0.05, 0.5);
-      video.currentTime = seekTime;
+      try {
+        // Use provided time or default to 5% of duration (max 0.5s)
+        const seekTime = time !== undefined 
+          ? Math.min(time, video.duration) 
+          : Math.min(video.duration * 0.05, 0.5);
+        
+        // Add a small delay to ensure video is fully loaded
+        setTimeout(() => {
+          video.currentTime = seekTime;
+        }, 100);
+      } catch (error) {
+        console.error('Error setting video time:', error);
+        setHasError(true);
+        setIsLoading(false);
+      }
     };
 
     const handleSeeked = () => {
       generateThumbnail(video);
     };
 
-    const handleError = () => {
+    const handleError = (e) => {
+      console.error('Video thumbnail error:', e, 'Video URL:', videoUrl);
       setHasError(true);
       setIsLoading(false);
       if (timeoutRef.current) {
@@ -136,12 +147,11 @@ export default function VideoThumbnail({ videoUrl, alt, className = '', time }: 
 
   if (hasError) {
     return (
-      <div ref={containerRef} className={`bg-red-100 border border-red-300 flex flex-col items-center justify-center p-2 ${className}`}>
-        <svg className="w-6 h-6 text-red-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.634 0L3.232 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      <div ref={containerRef} className={`bg-gray-100 border border-gray-200 flex flex-col items-center justify-center p-2 ${className}`}>
+        <svg className="w-6 h-6 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
-        <span className="text-xs text-red-600 text-center">로드 실패</span>
-        <span className="text-xs text-gray-500 text-center mt-1">URL: {videoUrl}</span>
+        <span className="text-xs text-gray-500 text-center">썸네일</span>
       </div>
     );
   }
@@ -155,6 +165,7 @@ export default function VideoThumbnail({ videoUrl, alt, className = '', time }: 
           muted
           preload="metadata"
           className="hidden"
+          onError={handleError}
         />
       )}
       
