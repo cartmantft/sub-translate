@@ -10,7 +10,7 @@ interface LogContext {
   userId?: string;
   action?: string;
   component?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 class Logger {
@@ -127,7 +127,7 @@ class Logger {
   /**
    * Utility method to safely stringify objects
    */
-  safeStringify(obj: any): string {
+  safeStringify(obj: unknown): string {
     try {
       return JSON.stringify(obj, (key, value) => {
         // Mask sensitive keys
@@ -136,7 +136,7 @@ class Logger {
         }
         return value;
       });
-    } catch (error) {
+    } catch {
       return '[Unable to stringify object]';
     }
   }
