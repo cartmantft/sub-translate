@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import VideoThumbnail from './VideoThumbnail';
+import { useCsrfToken } from '@/hooks/useCsrfToken';
 
 export interface SubtitleSegment {
   id: string;
@@ -14,6 +15,7 @@ export interface SubtitleSegment {
 interface EnhancedSubtitleEditorProps {
   segments: SubtitleSegment[];
   videoUrl: string;
+  projectId: string;
   currentTime?: number;
   onSegmentClick?: (time: number) => void;
   onSegmentsChange?: (segments: SubtitleSegment[]) => void;
@@ -25,6 +27,7 @@ type ViewMode = 'translation' | 'original' | 'both';
 export default function EnhancedSubtitleEditor({
   segments: initialSegments,
   videoUrl,
+  projectId,
   currentTime = 0,
   onSegmentClick,
   onSegmentsChange,
@@ -34,7 +37,10 @@ export default function EnhancedSubtitleEditor({
   const [viewMode, setViewMode] = useState<ViewMode>('translation');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { token: csrfToken } = useCsrfToken();
 
   // Update segments when props change
   useEffect(() => {
@@ -131,16 +137,60 @@ export default function EnhancedSubtitleEditor({
         <h2 className="text-xl font-semibold">자막 편집기</h2>
         {isDirty && (
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-            onClick={() => {
-              console.log('Save changes clicked');
-              setIsDirty(false);
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={async () => {
+              setSaveError(null);
+              setIsSaving(true);
+              
+              try {
+                const response = await fetch(`/api/projects/${projectId}`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
+                  },
+                  body: JSON.stringify({ subtitles: segments })
+                });
+                
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.error || 'Failed to save subtitles');
+                }
+                
+                const data = await response.json();
+                if (data.success) {
+                  setIsDirty(false);
+                  // Show success feedback - you might want to add a toast notification here
+                  console.log('Subtitles saved successfully');
+                }
+              } catch (error) {
+                console.error('Error saving subtitles:', error);
+                setSaveError(error instanceof Error ? error.message : 'Failed to save changes');
+              } finally {
+                setIsSaving(false);
+              }
             }}
+            disabled={isSaving}
           >
-            변경사항 저장
+            {isSaving ? '저장 중...' : '변경사항 저장'}
           </button>
         )}
       </div>
+
+      {/* Error message */}
+      {saveError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg mb-4 flex items-center justify-between">
+          <span className="text-sm">{saveError}</span>
+          <button
+            onClick={() => setSaveError(null)}
+            className="text-red-500 hover:text-red-700"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Segment control */}
       <div className="bg-gray-100 rounded-lg p-1 mb-4 flex-shrink-0">

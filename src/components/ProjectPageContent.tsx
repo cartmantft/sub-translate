@@ -167,6 +167,7 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
                 <EnhancedSubtitleEditor 
                   segments={editedSubtitles}
                   videoUrl={project.video_url}
+                  projectId={project.id}
                   currentTime={currentVideoTime}
                   onSegmentClick={handleSubtitleClick}
                   onSegmentsChange={handleSubtitlesChange}
