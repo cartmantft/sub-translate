@@ -9,17 +9,25 @@ interface SubtitleSegment {
   text: string;
 }
 
+interface VideoMetadata {
+  width: number;
+  height: number;
+  aspectRatio: number;
+  videoType: 'portrait' | 'landscape' | 'square';
+}
+
 interface VideoPlayerProps {
   src: string;
   subtitles?: SubtitleSegment[];
   onTimeUpdate?: (currentTime: number) => void;
+  onVideoMetadata?: (metadata: VideoMetadata) => void;
 }
 
 export interface VideoPlayerRef {
   jumpToTime: (time: number) => void;
 }
 
-const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitles = [], onTimeUpdate }, ref) => {
+const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitles = [], onTimeUpdate, onVideoMetadata }, ref) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [showSubtitles, setShowSubtitles] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -30,6 +38,34 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
       subtitle => currentTime >= subtitle.startTime && currentTime <= subtitle.endTime
     ) || null;
   };
+
+  // Handle video metadata loaded
+  const handleLoadedMetadata = useCallback(() => {
+    if (videoRef.current && onVideoMetadata) {
+      const video = videoRef.current;
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      const aspectRatio = width / height;
+      
+      let videoType: 'portrait' | 'landscape' | 'square';
+      if (aspectRatio > 1.1) {
+        videoType = 'landscape';
+      } else if (aspectRatio < 0.9) {
+        videoType = 'portrait';
+      } else {
+        videoType = 'square';
+      }
+
+      const metadata: VideoMetadata = {
+        width,
+        height,
+        aspectRatio,
+        videoType
+      };
+
+      onVideoMetadata(metadata);
+    }
+  }, [onVideoMetadata]);
 
   // Handle video time updates
   const handleTimeUpdate = useCallback(() => {
@@ -57,11 +93,13 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
     const video = videoRef.current;
     if (video) {
       video.addEventListener('timeupdate', handleTimeUpdate);
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
       return () => {
         video.removeEventListener('timeupdate', handleTimeUpdate);
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       };
     }
-  }, [handleTimeUpdate]);
+  }, [handleTimeUpdate, handleLoadedMetadata]);
 
   const currentSubtitle = getCurrentSubtitle();
 
@@ -70,12 +108,13 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
   }
 
   return (
-    <div className="relative w-full flex justify-center bg-black rounded-lg shadow-lg overflow-hidden">
+    <div className="relative w-full h-full flex justify-center bg-black overflow-hidden rounded-l-2xl">
+      {/* Video element with rounded corners */}
       <video 
         ref={videoRef}
         controls 
-        className="max-w-full max-h-[70vh] h-auto object-contain rounded-lg"
-        style={{ aspectRatio: 'auto' }}
+        className="w-full h-full object-contain rounded-l-2xl"
+        style={{ aspectRatio: 'auto', borderTopLeftRadius: '1rem', borderBottomLeftRadius: '1rem' }}
       >
         <source src={src} type="video/mp4" />
         Your browser does not support the video tag.

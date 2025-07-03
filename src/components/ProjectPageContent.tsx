@@ -2,10 +2,10 @@
 
 import { useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Allotment } from 'allotment';
-import 'allotment/dist/style.css';
+import ResizablePanels from '@/components/ResizablePanels';
 import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer';
 import EnhancedSubtitleEditor from '@/components/EnhancedSubtitleEditor';
+import { calculateOptimalLayout, getLayoutRecommendation, getVideoTypeIcon } from '@/lib/layout-utils';
 
 interface SubtitleSegment {
   id: string;
@@ -13,6 +13,13 @@ interface SubtitleSegment {
   endTime: number;
   text: string;
   originalText?: string;
+}
+
+interface VideoMetadata {
+  width: number;
+  height: number;
+  aspectRatio: number;
+  videoType: 'portrait' | 'landscape' | 'square';
 }
 
 interface Project {
@@ -35,6 +42,14 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
   const videoPlayerRef = useRef<VideoPlayerRef>(null);
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
   const [editedSubtitles, setEditedSubtitles] = useState<SubtitleSegment[]>(parsedSubtitles);
+  const [videoMetadata, setVideoMetadata] = useState<VideoMetadata | null>(null);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [layoutConfig, setLayoutConfig] = useState({
+    defaultLeftWidth: 50,
+    minLeftWidth: 300,
+    minRightWidth: 300,
+    maxLeftWidth: 70
+  });
 
   const handleSubtitleClick = useCallback((startTime: number) => {
     if (videoPlayerRef.current) {
@@ -49,6 +64,18 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
   const handleSubtitlesChange = useCallback((segments: SubtitleSegment[]) => {
     setEditedSubtitles(segments);
   }, []);
+
+  const handleVideoMetadata = useCallback((metadata: VideoMetadata) => {
+    setVideoMetadata(metadata);
+    setIsVideoLoading(false);
+    const optimalConfig = calculateOptimalLayout(metadata);
+    setLayoutConfig(optimalConfig);
+  }, []);
+
+  const handleLayoutChange = useCallback((leftWidthPercent: number) => {
+    // Optional: Save user's layout preference to localStorage
+    // localStorage.setItem(`layout-${project.id}`, leftWidthPercent.toString());
+  }, [project.id]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -65,31 +92,19 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
       <div className="container mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="mb-8">
-          <Link 
-            href="/dashboard" 
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6 font-medium transition-colors group"
-          >
-            <div className="w-8 h-8 rounded-full bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </div>
-            <span>대시보드로 돌아가기</span>
-          </Link>
-          
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-            
-            <div className="flex items-start gap-4">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-start gap-3">
               <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0">
                 <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </div>
-              <div className="flex-1 pr-24">
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-gray-800 mb-1">
                   {project.title || '제목 없는 프로젝트'}
                 </h1>
-                <div className="flex items-center gap-6 text-gray-600">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-gray-600">
                   <div className="flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -112,10 +127,22 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
                     </svg>
                     <span>{parsedSubtitles.length}개 자막</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-green-600">완료됨</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-green-600">완료됨</span>
+                    </div>
                   </div>
+                  <Link 
+                    href="/dashboard" 
+                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </div>
+                    <span>대시보드로 돌아가기</span>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -123,61 +150,37 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
         </div>
 
         {/* Main Content Layout with Resizable Panels */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-[calc(100vh-400px)] min-h-[500px] relative">
-          <div className="absolute top-4 right-4 z-10 bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-medium">
-            👆 드래그하여 크기 조절
-          </div>
-          <Allotment 
-            minSize={300}
-            split="vertical"
-            resizerStyle={{
-              width: '8px',
-              backgroundColor: '#e5e7eb',
-              border: '2px solid #3b82f6',
-              borderRadius: '4px',
-              cursor: 'col-resize',
-              transition: 'all 0.2s ease',
-              position: 'relative'
-            }}
-          >
-            {/* Video Player Panel */}
-            <Allotment.Pane minSize={300} maxSize={700}>
-              <div className="h-full p-6 bg-white">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold text-gray-800">비디오 플레이어</h2>
-                </div>
-                {project.video_url ? (
-                  <div className="rounded-xl overflow-hidden bg-black h-full flex items-center">
-                    <VideoPlayer 
-                      ref={videoPlayerRef}
-                      src={project.video_url} 
-                      subtitles={editedSubtitles}
-                      onTimeUpdate={handleVideoTimeUpdate}
-                    />
-                  </div>
-                ) : (
-                  <div className="bg-gray-100 rounded-xl p-12 text-center h-full flex items-center justify-center">
-                    <div>
-                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <p className="text-gray-500 font-medium">비디오를 사용할 수 없습니다</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 h-[calc(100vh-300px)] min-h-[500px] overflow-hidden">
+          <ResizablePanels
+            minLeftWidth={layoutConfig.minLeftWidth}
+            minRightWidth={layoutConfig.minRightWidth}
+            defaultLeftWidth={layoutConfig.defaultLeftWidth}
+            maxLeftWidth={layoutConfig.maxLeftWidth}
+            onLayoutChange={handleLayoutChange}
+            className="h-full"
+            leftPanel={
+              project.video_url ? (
+                <VideoPlayer 
+                  ref={videoPlayerRef}
+                  src={project.video_url} 
+                  subtitles={editedSubtitles}
+                  onTimeUpdate={handleVideoTimeUpdate}
+                  onVideoMetadata={handleVideoMetadata}
+                />
+              ) : (
+                <div className="bg-gray-100 p-12 text-center h-full flex items-center justify-center">
+                  <div>
+                    <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
                     </div>
+                    <p className="text-gray-500 font-medium">비디오를 사용할 수 없습니다</p>
                   </div>
-                )}
-              </div>
-            </Allotment.Pane>
-
-            {/* Resizable Divider */}
-            <Allotment.Pane minSize={300} maxSize={700}>
-              {/* Enhanced Subtitle Editor */}
+                </div>
+              )
+            }
+            rightPanel={
               <div className="h-full p-6 bg-white">
                 <EnhancedSubtitleEditor 
                   segments={editedSubtitles}
@@ -189,8 +192,8 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
                   className="h-full"
                 />
               </div>
-            </Allotment.Pane>
-          </Allotment>
+            }
+          />
         </div>
 
 
