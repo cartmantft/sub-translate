@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
 
 // Load environment variables from .env.local for tests
+// This ensures test environment has access to Supabase credentials and other config
 dotenv.config({ path: '.env.local' });
 
 /**

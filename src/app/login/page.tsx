@@ -84,8 +84,11 @@ export default function LoginPage() {
           setErrorMessage(null);
           router.push('/dashboard');
         } else if (event === 'SIGNED_OUT') {
+          // Clear any existing error messages on sign out
           setErrorMessage(null);
         } else if (event === 'TOKEN_REFRESHED') {
+          setErrorMessage(null);
+        } else if (event === 'PASSWORD_RECOVERY') {
           setErrorMessage(null);
         }
       }
@@ -99,6 +102,19 @@ export default function LoginPage() {
 
   // Handle authentication errors by monitoring Supabase auth events more directly
   useEffect(() => {
+    // Monitor for any unhandled promise rejections (common with auth failures)
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason && typeof event.reason === 'object' && 'message' in event.reason) {
+        const message = event.reason.message;
+        if (message.includes('credentials') || message.includes('login') || message.includes('auth')) {
+          setErrorMessage('🔑 로그인 인증에 실패했습니다. 다시 시도해주세요.');
+          logger.error('Unhandled auth promise rejection', event.reason, { component: 'LoginPage' });
+        }
+      }
+    };
+    
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
     // Monitor fetch requests for auth errors
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
@@ -142,6 +158,9 @@ export default function LoginPage() {
             console.log('🚨 Setting error message:', message);
             setErrorMessage(message);
             
+            // Force a re-render to ensure the error message appears
+            setTimeout(() => setErrorMessage(message), 10);
+            
             logger.error('Auth request failed', errorData, { 
               component: 'LoginPage',
               action: 'auth_request_error',
@@ -170,6 +189,7 @@ export default function LoginPage() {
     
     return () => {
       window.fetch = originalFetch;
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
   }, []);
 
@@ -205,14 +225,17 @@ export default function LoginPage() {
 
           {/* Card Content */}
           <div className="p-8">
-            {/* Error Message - Enhanced visibility */}
+            {/* Error Message - Enhanced visibility with animation */}
             {errorMessage && (
-              <div className="mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-md">
+              <div className="mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-lg animate-pulse">
                 <div className="flex items-start">
-                  <svg className="w-6 h-6 text-red-500 mr-3 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-7 h-7 text-red-500 mr-3 mt-0.5 flex-shrink-0 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div className="flex-1">
+                    <div className="bg-red-600 text-white text-sm font-bold px-2 py-1 rounded mb-2 inline-block">
+                      ⚠️ 로그인 오류
+                    </div>
                     <p className="text-red-800 text-base font-semibold leading-relaxed">{errorMessage}</p>
                     <button
                       onClick={() => setErrorMessage(null)}

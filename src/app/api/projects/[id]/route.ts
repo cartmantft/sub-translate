@@ -74,6 +74,7 @@ async function deleteStorageFile(fileUrl: string, bucketName: string, supabase: 
         errorDetails: logger.safeStringify(deleteError)
       });
       
+      
       // Check for specific permission errors
       if (deleteError.message?.includes('access') || deleteError.message?.includes('permission')) {
         logger.error('PERMISSION ERROR: Likely missing RLS policy for DELETE on videos bucket', deleteError, {

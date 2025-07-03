@@ -9,7 +9,7 @@ SubTranslate is a Next.js application for automatic subtitle extraction and tran
 ## Development Commands
 
 ### Essential Commands
-- `npm run dev` - Start development server with Turbopack
+- `npm run dev` - Start development server with Turbopack (⚠️ Use Server Management commands first)
 - `npm run build` - Build for production
 - `npm run lint` - Run ESLint
 - `npm start` - Run production server
@@ -25,14 +25,16 @@ SubTranslate is a Next.js application for automatic subtitle extraction and tran
 - `npx playwright test tests/accessibility.spec.ts` - Run accessibility tests
 - `npx playwright test --grep="login.*dashboard"` - Run specific test patterns
 
-### Server Management
+### Server Management (🚨 PREFERRED for development)
+- `npm run servers:status` - Check server status (ALWAYS run first)
+- `npm run servers:cleanup` - Clean up server processes
 - `npm run servers:start` - Start all development servers
 - `npm run servers:stop` - Stop all servers
 - `npm run servers:restart` - Restart all servers
-- `npm run servers:status` - Check server status
-- `npm run servers:cleanup` - Clean up server processes
-- `npm run dev:server` - Start individual dev server
+- `npm run dev:server` - Start individual dev server (fallback)
 - `npm run test:server` - Start test server
+
+⚠️ **Important**: Always use these commands instead of direct `npm run dev` to avoid port conflicts
 
 ## Environment Setup
 
@@ -199,11 +201,19 @@ flowchart TD
 
 ## Documentation Updates
 
+**"메모리 뱅크 업데이트"** (Korean) / **"update memory bank"** (English) means:
+- Update CLAUDE.md file
+- Update ALL files in memory-bank/ folder
+
 Memory Bank updates occur when:
 1. Discovering new project patterns
 2. After implementing significant changes
-3. When user requests with **update memory bank** (MUST review ALL files)
+3. When user requests with **"메모리 뱅크 업데이트"** or **"update memory bank"** (MUST review ALL files)
 4. When context needs clarification
+
+**Scope of updates includes:**
+- `/CLAUDE.md`
+- `/memory-bank/**/*.md` (all markdown files in memory-bank folder)
 
 flowchart TD
     Start[Update Process]
@@ -219,6 +229,6 @@ flowchart TD
 
     Start --> Process
 
-Note: When triggered by **update memory bank**, I MUST review every memory bank file, even if some don't require updates. Focus particularly on activeContext.md and progress.md as they track current state.
+Note: When triggered by **"메모리 뱅크 업데이트"** or **"update memory bank"**, I MUST review every memory bank file AND CLAUDE.md, even if some don't require updates. Focus particularly on activeContext.md and progress.md as they track current state.
 
 REMEMBER: After every memory reset, I begin completely fresh. The Memory Bank is my only link to previous work. It must be maintained with precision and clarity, as my effectiveness depends entirely on its accuracy.
