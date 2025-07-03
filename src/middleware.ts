@@ -1,5 +1,43 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { csrfMiddleware } from '@/lib/middleware/csrf'
+
+// Security headers configuration
+const securityHeaders = {
+  // Content Security Policy - restrictive but allows necessary external resources
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // unsafe-eval for Next.js dev, unsafe-inline for inline scripts
+    "style-src 'self' 'unsafe-inline'", // unsafe-inline for CSS-in-JS and inline styles
+    "img-src 'self' data: blob: https:", // Allow images from self, data URLs, blobs, and HTTPS
+    "font-src 'self' data:", // Allow fonts from self and data URLs
+    "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com", // API endpoints
+    "media-src 'self' blob: https:", // Allow media from self, blobs, and HTTPS
+    "object-src 'none'", // Disable object/embed/applet
+    "base-uri 'self'", // Restrict base URI
+    "form-action 'self'", // Restrict form actions to same origin
+    "frame-ancestors 'none'", // Prevent framing (clickjacking protection)
+    "upgrade-insecure-requests" // Upgrade HTTP to HTTPS
+  ].join('; '),
+  // Prevent clickjacking attacks
+  'X-Frame-Options': 'DENY',
+  // Prevent MIME type sniffing
+  'X-Content-Type-Options': 'nosniff', 
+  // Enable XSS filtering
+  'X-XSS-Protection': '1; mode=block',
+  // Control referrer information
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  // Force HTTPS (only in production)
+  ...(process.env.NODE_ENV === 'production' && {
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload'
+  }),
+  // Prevent DNS prefetching for privacy
+  'X-DNS-Prefetch-Control': 'off',
+  // Disable download prompts for unknown MIME types
+  'X-Download-Options': 'noopen',
+  // Prevent Microsoft Edge/IE from executing downloads in site context
+  'X-Permitted-Cross-Domain-Policies': 'none'
+}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -7,6 +45,21 @@ export async function middleware(request: NextRequest) {
       headers: request.headers,
     },
   })
+
+  // Apply security headers to all responses
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value)
+  })
+
+  // Apply CSRF protection to API routes
+  const csrfResponse = await csrfMiddleware(request)
+  if (csrfResponse) {
+    // CSRF validation failed, return error response with security headers
+    Object.entries(securityHeaders).forEach(([key, value]) => {
+      csrfResponse.headers.set(key, value)
+    })
+    return csrfResponse
+  }
 
   // Skip auth check for public routes
   const publicRoutes = ['/login', '/signup']
