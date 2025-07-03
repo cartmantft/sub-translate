@@ -247,13 +247,11 @@ export default defineConfig({
 
   // 기대값 설정
   expect: {
-    // 시각적 비교 임계값
-    threshold: 0.2,
-    
-    // 애니메이션 비활성화
+    // 애니메이션 비활성화 및 시각적 비교 임계값
     toHaveScreenshot: {
       animations: 'disabled',
       caret: 'hide',
+      threshold: 0.2,
     },
     
     // 기본 타임아웃
@@ -272,8 +270,8 @@ export default defineConfig({
   },
 });
 
-// 환경별 설정 오버라이드
-if (process.env.NODE_ENV === 'ci') {
+// 환경별 설정 오버라이드 (CI 환경 감지)
+if (process.env.CI === 'true' || process.env.NODE_ENV === 'test') {
   // CI 환경 설정
   module.exports.use = {
     ...module.exports.use,

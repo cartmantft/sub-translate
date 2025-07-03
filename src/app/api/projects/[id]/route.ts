@@ -193,7 +193,7 @@ export async function PUT(
   } catch (error) {
     logger.error('Error in PUT /api/projects/[id]', error, { 
       action: 'updateProject',
-      projectId: params.id
+      projectId: 'unknown'
     });
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
@@ -314,7 +314,7 @@ export async function DELETE(
   } catch (error) {
     logger.error('Error in DELETE /api/projects/[id]', error, { 
       action: 'deleteProject',
-      projectId: params.id
+      projectId: 'unknown'
     });
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(

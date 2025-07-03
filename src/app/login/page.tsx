@@ -105,7 +105,7 @@ export default function LoginPage() {
     // Monitor auth state changes for error handling
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN_WITH_PASSWORD' && !session) {
+        if (event === 'SIGNED_IN' && !session) {
           // This usually indicates a failed sign-in attempt
           setErrorMessage('🚫 이메일 또는 비밀번호가 올바르지 않습니다.');
           logger.warn('Sign in failed - no session created', undefined, { 
@@ -123,7 +123,11 @@ export default function LoginPage() {
         const response = await originalFetch(...args);
         
         // Monitor Supabase auth endpoints
-        const url = typeof args[0] === 'string' ? args[0] : args[0].url;
+        const url = typeof args[0] === 'string' 
+          ? args[0] 
+          : args[0] instanceof URL 
+            ? args[0].href 
+            : args[0].url;
         if (url.includes('/auth/v1/token') && !response.ok) {
           // Use a timeout to ensure the error message shows after any Auth UI processing
           setTimeout(async () => {
