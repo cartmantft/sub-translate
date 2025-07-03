@@ -66,9 +66,8 @@ async function validateRequestCsrfToken(request: NextRequest): Promise<{
   errorCode?: string
 }> {
   try {
-    // Extract token from request (header or form data)
-    const url = new URL(request.url)
-    const submittedToken = extractCsrfToken(request.headers, url.searchParams)
+    // Extract token from request headers only
+    const submittedToken = extractCsrfToken(request.headers)
 
     if (!submittedToken) {
       return {

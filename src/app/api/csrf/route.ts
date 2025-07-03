@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { 
   createCsrfTokenData, 
+  validateCsrfToken,
   CSRF_COOKIE_CONFIG,
   CSRF_ERRORS 
 } from '@/lib/utils/csrf'
@@ -164,5 +165,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Import the validation function here to avoid import issues
-import { validateCsrfToken } from '@/lib/utils/csrf'

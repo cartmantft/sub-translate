@@ -59,8 +59,7 @@ export async function validateCsrfToken(
 
   // Perform timing-safe comparison to prevent timing attacks
   try {
-    // Use Web Crypto API for timing-safe comparison
-    return await timingSafeEqual(submittedToken, storedTokenData.token)
+    return timingSafeEqual(submittedToken, storedTokenData.token)
   } catch {
     // If comparison fails, token is invalid
     return false
@@ -68,58 +67,19 @@ export async function validateCsrfToken(
 }
 
 /**
- * Timing-safe string comparison using Web Crypto API
+ * Timing-safe string comparison
  * This prevents timing attacks by ensuring constant-time comparison
  */
-async function timingSafeEqual(a: string, b: string): Promise<boolean> {
-  try {
-    // Convert strings to Uint8Arrays
-    const encoder = new TextEncoder()
-    const arrayA = encoder.encode(a)
-    const arrayB = encoder.encode(b)
-    
-    // Use subtle crypto for timing-safe comparison
-    const keyA = await crypto.subtle.importKey(
-      'raw',
-      arrayA,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    )
-    
-    const keyB = await crypto.subtle.importKey(
-      'raw', 
-      arrayB,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    )
-    
-    // Create test data for signing
-    const testData = new Uint8Array(1)
-    
-    // Sign with both keys
-    const signatureA = await crypto.subtle.sign('HMAC', keyA, testData)
-    const signatureB = await crypto.subtle.sign('HMAC', keyB, testData)
-    
-    // Compare signatures (timing-safe at the crypto level)
-    const sigArrayA = new Uint8Array(signatureA)
-    const sigArrayB = new Uint8Array(signatureB)
-    
-    if (sigArrayA.length !== sigArrayB.length) {
-      return false
-    }
-    
-    // Manual timing-safe comparison as fallback
-    let result = 0
-    for (let i = 0; i < sigArrayA.length; i++) {
-      result |= sigArrayA[i] ^ sigArrayB[i]
-    }
-    
-    return result === 0
-  } catch {
-    return false
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
   }
+
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= (a.charCodeAt(i) ^ b.charCodeAt(i));
+  }
+  return result === 0;
 }
 
 /**
@@ -151,11 +111,6 @@ export const CSRF_COOKIE_CONFIG = {
  */
 export const CSRF_HEADER_NAME = 'X-CSRF-Token'
 
-/**
- * Query parameter name for CSRF token (fallback for forms)
- * Used when custom headers are not available
- */
-export const CSRF_QUERY_PARAM = '_csrf'
 
 /**
  * Error messages for CSRF validation failures
@@ -168,30 +123,16 @@ export const CSRF_ERRORS = {
 } as const
 
 /**
- * Extracts CSRF token from request headers or body
- * Checks both custom header and query parameter
+ * Extracts CSRF token from request headers
+ * Only checks custom header for security reasons
  * 
  * @param headers - Request headers
- * @param searchParams - URL search parameters (for form submissions)
  * @returns CSRF token string or null if not found
  */
 export function extractCsrfToken(
-  headers: Headers,
-  searchParams?: URLSearchParams
+  headers: Headers
 ): string | null {
-  // First, try to get token from custom header (preferred method)
+  // Get token from custom header (the secure method)
   const headerToken = headers.get(CSRF_HEADER_NAME)
-  if (headerToken) {
-    return headerToken
-  }
-
-  // Fallback to query parameter for form submissions
-  if (searchParams) {
-    const queryToken = searchParams.get(CSRF_QUERY_PARAM)
-    if (queryToken) {
-      return queryToken
-    }
-  }
-
-  return null
+  return headerToken
 }

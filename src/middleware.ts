@@ -4,11 +4,17 @@ import { csrfMiddleware } from '@/lib/middleware/csrf'
 
 // Security headers configuration
 const securityHeaders = {
-  // Content Security Policy - restrictive but allows necessary external resources
+  // Content Security Policy - environment-specific configuration
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // unsafe-eval for Next.js dev, unsafe-inline for inline scripts
-    "style-src 'self' 'unsafe-inline'", // unsafe-inline for CSS-in-JS and inline styles
+    // Script src: strict for production, relaxed for development
+    process.env.NODE_ENV === 'production' 
+      ? "script-src 'self'"
+      : "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // unsafe-eval for Next.js dev, unsafe-inline for inline scripts
+    // Style src: strict for production, relaxed for development  
+    process.env.NODE_ENV === 'production'
+      ? "style-src 'self'"
+      : "style-src 'self' 'unsafe-inline'", // unsafe-inline for CSS-in-JS and inline styles
     "img-src 'self' data: blob: https:", // Allow images from self, data URLs, blobs, and HTTPS
     "font-src 'self' data:", // Allow fonts from self and data URLs
     "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com", // API endpoints
