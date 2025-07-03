@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { logger } from '@/lib/utils/logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
       segments: transcription.segments || []
     }, { status: 200 }); // Explicitly set status to 200 for success
   } catch (error) {
-    console.error('Error in transcribe route:', error);
+    logger.error('Error in transcribe route', error, { action: 'transcribe' });
     // It's good practice to not expose raw error messages to the client
     const errorMessage =
       error instanceof Error ? error.message : 'An unknown error occurred';

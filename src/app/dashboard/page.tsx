@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import DashboardContent from '@/components/DashboardContent';
+import { logger } from '@/lib/utils/logger';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -30,15 +31,24 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false });
 
   // Debug: Log the projects data to see thumbnail URLs
-  console.log('Fetched projects:', projects?.map(p => ({
-    id: p.id,
-    title: p.title,
-    thumbnail_url: p.thumbnail_url,
-    video_url: p.video_url
-  })));
+  logger.debug('Fetched projects data', {
+    component: 'DashboardPage',
+    action: 'fetch_projects',
+    projectCount: projects?.length || 0,
+    projects: projects?.map(p => ({
+      id: p.id,
+      title: p.title,
+      thumbnail_url: p.thumbnail_url,
+      video_url: p.video_url
+    }))
+  });
 
   if (error) {
-    console.error('Error fetching projects:', error);
+    logger.error('Error fetching projects', error, {
+      component: 'DashboardPage',
+      action: 'fetch_projects',
+      userId: user?.id
+    });
     return (
       <div className="container mx-auto p-8">
         <h1 className="text-3xl font-bold mb-6">Your Dashboard</h1>

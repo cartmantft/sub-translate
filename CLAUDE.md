@@ -19,6 +19,12 @@ SubTranslate is a Next.js application for automatic subtitle extraction and tran
 - `npm run test:ui` - Run Playwright tests with UI mode
 - `npm run test:headed` - Run Playwright tests in headed mode
 
+### Advanced Testing
+- `npx playwright test tests/auth-real-flow.spec.ts` - Run authentication flow tests
+- `npx playwright test tests/performance.spec.ts` - Run performance tests
+- `npx playwright test tests/accessibility.spec.ts` - Run accessibility tests
+- `npx playwright test --grep="login.*dashboard"` - Run specific test patterns
+
 ### Server Management
 - `npm run servers:start` - Start all development servers
 - `npm run servers:stop` - Stop all servers
@@ -59,6 +65,10 @@ GOOGLE_API_KEY=your_google_api_key
 - `/src/app/` - Next.js App Router pages and API routes
 - `/src/components/` - React components (FileUploader, SubtitleEditor, VideoPlayer)
 - `/src/lib/supabase/` - Supabase client configuration (server/client versions)
+- `/tests/` - Comprehensive test suite with Page Object Model
+- `/tests/pages/` - Page Object Model structure for E2E tests
+- `/tests/fixtures/` - Test fixtures (auth.fixture.ts for authentication)
+- `/tests/utils/` - Test utilities and helpers
 - `/memory-bank/` - Project documentation and context
 
 ### Important Patterns
@@ -69,19 +79,32 @@ GOOGLE_API_KEY=your_google_api_key
 
 ### Current Implementation Status
 - ✅ Core features: upload, transcribe, translate, save projects
-- ✅ User authentication and dashboard
-- ✅ Basic subtitle editor
-- 🚧 UI/UX improvements and error handling in progress
-- ⚠️ MainContent component uses dummy data for demonstration
+- ✅ User authentication and dashboard  
+- ✅ Project edit/delete functionality with Storage cleanup
+- ✅ Professional UI/UX with responsive design
+- ✅ Comprehensive test system with Page Object Model pattern
+- ✅ Authentication flow testing (login → dashboard access)
+- ✅ Performance and accessibility testing infrastructure
+- ✅ AI code review quality assurance applied
 
 ### Development Notes
 - Always check RLS policies when working with Supabase tables
 - API routes handle all sensitive operations (API keys never exposed to client)
 - Use server-side Supabase client for API routes, client-side for React components
 - The project follows serverless architecture principles
-- Playwright tests are configured with Page Object Model pattern
+- Comprehensive test system with 75% authentication flow success rate
+- Page Object Model pattern ensures maintainable and scalable tests
+- Authentication fixtures provide reliable user management for testing
+- Test infrastructure includes performance, accessibility, and integration testing
 - Server management scripts handle development and test server orchestration
 - Client-side Supabase client uses memory storage in development for better testing experience
+
+### Test Quality Assurance
+- Run authentication flow tests to verify login → dashboard access scenarios
+- Use `npx playwright test tests/auth-real-flow.spec.ts` for complete auth testing
+- Test results documented in TEST-RESULTS-SUMMARY.md and AUTHENTICATION-TEST-RESULTS.md
+- All tests follow Page Object Model pattern for maintainability
+- Test fixtures automatically handle user creation and cleanup
 
 
 # CLAUDE's Memory Bank

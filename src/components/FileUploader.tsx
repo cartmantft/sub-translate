@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { useState, useRef, DragEvent } from 'react';
 import toast from 'react-hot-toast'; // Import toast
+import { logger } from '@/lib/utils/logger';
 
 interface FileUploaderProps {
   onUploadSuccess?: (url: string) => void;
@@ -104,7 +105,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
         onUploadSuccess(publicUrlData.publicUrl);
       }
     } catch (error: unknown) {
-      console.error('Error uploading file:', error);
+      logger.error('Error uploading file', error, { component: 'FileUploader', action: 'handleUpload' });
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다';
       toast.error(`파일 업로드 오류: ${errorMessage}`, { id: loadingToastId });
     } finally {

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
 import ProjectPageContent from '@/components/ProjectPageContent';
+import { logger } from '@/lib/utils/logger';
 
 interface SubtitleSegment {
   id: string;
@@ -32,7 +33,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     .single();
 
   if (error) {
-    console.error('Error fetching project:', error);
+    logger.error('Error fetching project', error, {
+      component: 'ProjectPage',
+      action: 'fetch_project',
+      projectId: id,
+      userId: user?.id
+    });
     if (error.code === 'PGRST116') {
       // No rows returned - project doesn't exist or user doesn't have access
       notFound();
@@ -51,7 +57,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       ? JSON.parse(project.subtitles) 
       : project.subtitles || [];
   } catch (e) {
-    console.error('Error parsing subtitles:', e);
+    logger.error('Error parsing subtitles', e, {
+      component: 'ProjectPage',
+      action: 'parse_subtitles',
+      projectId: id,
+      userId: user?.id
+    });
     parsedSubtitles = [];
   }
 

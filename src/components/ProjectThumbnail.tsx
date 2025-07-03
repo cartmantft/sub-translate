@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import VideoThumbnail from './VideoThumbnail';
+import { logger } from '@/lib/utils/logger';
 
 interface ProjectThumbnailProps {
   thumbnailUrl?: string | null;
@@ -13,7 +14,7 @@ export default function ProjectThumbnail({ thumbnailUrl, videoUrl, title }: Proj
   const [showVideoFallback, setShowVideoFallback] = useState(false);
 
   useEffect(() => {
-    console.log('ProjectThumbnail props:', { thumbnailUrl, videoUrl, title });
+    logger.debug('ProjectThumbnail props', { component: 'ProjectThumbnail', thumbnailUrl, videoUrl, title });
   }, [thumbnailUrl, videoUrl, title]);
 
   if (showVideoFallback || !thumbnailUrl || thumbnailUrl.trim() === '') {
@@ -51,11 +52,11 @@ export default function ProjectThumbnail({ thumbnailUrl, videoUrl, title }: Proj
           display: 'block'
         }}
         onError={() => {
-          console.error('Image failed to load:', thumbnailUrl);
+          logger.error('Image failed to load', undefined, { component: 'ProjectThumbnail', thumbnailUrl });
           setShowVideoFallback(true);
         }}
         onLoad={() => {
-          console.log('Image loaded successfully:', thumbnailUrl);
+          logger.debug('Image loaded successfully', { component: 'ProjectThumbnail', thumbnailUrl });
         }}
       />
       {!showVideoFallback && (
