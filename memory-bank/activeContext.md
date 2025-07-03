@@ -1,6 +1,25 @@
 # 현재 컨텍스트
 
-## 현재 상태: 🔒 보안 강화 작업 시작 (2025-07-03)
+## 현재 상태: 🔒 Issue #12 Open Redirect 방지 보안 작업 시작 (2025-07-03)
+
+### 🚨 Issue #12 진행 중: [보안] 리다이렉트 URL 검증 및 Open Redirect 방지 🚨
+**GitHub 이슈**: https://github.com/cartmantft/sub-translate/issues/12  
+**우선순위**: HIGH (Critical Security Vulnerability)  
+**시작일**: 2025-07-03  
+
+**발견된 취약점**: OAuth 콜백에서 critical Open Redirect 취약점 확인
+- **위치**: `/src/app/auth/callback/route.ts` lines 8-14
+- **영향**: 악의적 사이트로 사용자 리다이렉트 가능
+- **공격 벡터**: `?next=https://malicious-site.com` 파라미터 악용
+
+**구현 계획**:
+1. URL 검증 프레임워크 구현 (`/src/lib/utils/url-validator.ts`)
+2. OAuth 콜백 보안 수정 (allowlist 기반 검증)
+3. 시스템 전반 리다이렉트 보호 적용
+4. 보안 로깅 및 공격 시도 모니터링
+5. Playwright 보안 테스트 추가
+
+**완료 기준**: 외부 URL 리다이렉트 완전 차단, 안전한 내부 URL만 허용, 보안 로깅 활성화
 
 ### ✅ Issue #10 최종 완료: [보안] 인증 에러 페이지 및 에러 처리 강화 ✅
 **완료일**: 2025-07-03  
