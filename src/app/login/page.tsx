@@ -97,7 +97,7 @@ export default function LoginPage() {
     };
   }, [router, supabase]);
 
-  // Handle authentication errors by monitoring network requests
+  // Handle authentication errors by monitoring Supabase auth events more directly
   useEffect(() => {
     // Monitor fetch requests for auth errors
     const originalFetch = window.fetch;
@@ -113,32 +113,40 @@ export default function LoginPage() {
             
             let message = '로그인 중 오류가 발생했습니다.';
             
-            if (errorData.error_description || errorData.message) {
-              const errorText = errorData.error_description || errorData.message;
-              
-              if (errorText.includes('Invalid login credentials') || 
-                  errorText.includes('invalid_grant') ||
-                  errorText.includes('Invalid user credentials')) {
-                message = '이메일 또는 비밀번호가 올바르지 않습니다.';
-              } else if (errorText.includes('Email not confirmed')) {
-                message = '이메일 인증이 필요합니다. 이메일을 확인해주세요.';
-              } else if (errorText.includes('too many requests') || 
-                        errorText.includes('rate limit')) {
-                message = '너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
-              } else if (process.env.NODE_ENV === 'development') {
-                message = errorText;
+            // Handle the 400 Bad Request errors specifically
+            if (response.status === 400) {
+              if (errorData.error_description || errorData.message) {
+                const errorText = errorData.error_description || errorData.message;
+                
+                if (errorText.includes('Invalid login credentials') || 
+                    errorText.includes('invalid_grant') ||
+                    errorText.includes('Invalid user credentials')) {
+                  message = '🚫 이메일 또는 비밀번호가 올바르지 않습니다.';
+                } else if (errorText.includes('Email not confirmed')) {
+                  message = '📧 이메일 인증이 필요합니다. 이메일을 확인해주세요.';
+                } else if (errorText.includes('too many requests') || 
+                          errorText.includes('rate limit')) {
+                  message = '⏰ 너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
+                } else {
+                  // For any other 400 error, show generic message but with more detail in dev
+                  message = process.env.NODE_ENV === 'development' 
+                    ? `🔧 개발 모드 에러: ${errorText}`
+                    : '❌ 로그인 정보를 확인해주세요.';
+                }
+              } else {
+                message = '❌ 로그인 요청 처리 중 오류가 발생했습니다.';
               }
             }
             
-            // Use setTimeout to ensure the error is displayed after the Auth component processes
-            setTimeout(() => {
-              setErrorMessage(message);
-            }, 100);
+            // Show error immediately and with force
+            console.log('🚨 Setting error message:', message);
+            setErrorMessage(message);
             
             logger.error('Auth request failed', errorData, { 
               component: 'LoginPage',
               action: 'auth_request_error',
-              url: url.split('?')[0] // Log URL without query params
+              url: url.split('?')[0],
+              status: response.status
             });
           }
         }
@@ -147,7 +155,9 @@ export default function LoginPage() {
       } catch (error) {
         // If fetch itself fails
         if (typeof args[0] === 'string' && args[0].includes('/auth/v1/')) {
-          setErrorMessage('네트워크 연결을 확인해주세요.');
+          const message = '🌐 네트워크 연결을 확인해주세요.';
+          console.log('🚨 Network error, setting message:', message);
+          setErrorMessage(message);
           
           logger.error('Network error during auth', error, { 
             component: 'LoginPage',
@@ -195,20 +205,38 @@ export default function LoginPage() {
 
           {/* Card Content */}
           <div className="p-8">
-            {/* Error Message */}
+            {/* Error Message - Enhanced visibility */}
             {errorMessage && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-red-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-md">
+                <div className="flex items-start">
+                  <svg className="w-6 h-6 text-red-500 mr-3 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p className="text-red-800 text-sm font-medium">{errorMessage}</p>
+                  <div className="flex-1">
+                    <p className="text-red-800 text-base font-semibold leading-relaxed">{errorMessage}</p>
+                    <button
+                      onClick={() => setErrorMessage(null)}
+                      className="mt-3 inline-flex items-center px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium rounded-md transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      닫기
+                    </button>
+                  </div>
                 </div>
+              </div>
+            )}
+
+            {/* Development Error Test Button */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-yellow-800 text-sm mb-2">개발 모드 - 에러 메시지 테스트:</p>
                 <button
-                  onClick={() => setErrorMessage(null)}
-                  className="mt-2 text-red-600 hover:text-red-800 text-sm underline"
+                  onClick={() => setErrorMessage('🧪 테스트 에러 메시지입니다. 이 메시지가 보이나요?')}
+                  className="text-xs bg-yellow-200 hover:bg-yellow-300 text-yellow-800 px-2 py-1 rounded"
                 >
-                  닫기
+                  에러 메시지 테스트
                 </button>
               </div>
             )}
