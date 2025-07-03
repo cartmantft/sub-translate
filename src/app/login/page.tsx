@@ -251,18 +251,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Development Error Test Button */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-yellow-800 text-sm mb-2">개발 모드 - 에러 메시지 테스트:</p>
-                <button
-                  onClick={() => setErrorMessage('🧪 테스트 에러 메시지입니다. 이 메시지가 보이나요?')}
-                  className="text-xs bg-yellow-200 hover:bg-yellow-300 text-yellow-800 px-2 py-1 rounded"
-                >
-                  에러 메시지 테스트
-                </button>
-              </div>
-            )}
             <Auth
               supabaseClient={supabase}
               onlyThirdPartyProviders={false}
