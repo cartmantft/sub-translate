@@ -6,9 +6,10 @@ interface VideoThumbnailProps {
   videoUrl: string;
   alt: string;
   className?: string;
+  time?: number; // Optional time in seconds to seek to
 }
 
-export default function VideoThumbnail({ videoUrl, alt, className = '' }: VideoThumbnailProps) {
+export default function VideoThumbnail({ videoUrl, alt, className = '', time }: VideoThumbnailProps) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -96,7 +97,10 @@ export default function VideoThumbnail({ videoUrl, alt, className = '' }: VideoT
     }, 8000);
 
     const handleLoadedData = () => {
-      const seekTime = Math.min(video.duration * 0.05, 0.5);
+      // Use provided time or default to 5% of duration (max 0.5s)
+      const seekTime = time !== undefined 
+        ? Math.min(time, video.duration) 
+        : Math.min(video.duration * 0.05, 0.5);
       video.currentTime = seekTime;
     };
 
@@ -128,7 +132,7 @@ export default function VideoThumbnail({ videoUrl, alt, className = '' }: VideoT
         timeoutRef.current = null;
       }
     };
-  }, [isVisible, videoUrl, generateThumbnail]);
+  }, [isVisible, videoUrl, time, generateThumbnail]);
 
   if (hasError) {
     return (

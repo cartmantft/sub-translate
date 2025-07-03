@@ -2,8 +2,10 @@
 
 import { useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { Allotment } from 'allotment';
+import 'allotment/dist/style.css';
 import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer';
-import UnifiedSubtitleViewer from '@/components/UnifiedSubtitleViewer';
+import EnhancedSubtitleEditor from '@/components/EnhancedSubtitleEditor';
 
 interface SubtitleSegment {
   id: string;
@@ -32,6 +34,7 @@ interface ProjectPageContentProps {
 export default function ProjectPageContent({ project, parsedSubtitles }: ProjectPageContentProps) {
   const videoPlayerRef = useRef<VideoPlayerRef>(null);
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
+  const [editedSubtitles, setEditedSubtitles] = useState<SubtitleSegment[]>(parsedSubtitles);
 
   const handleSubtitleClick = useCallback((startTime: number) => {
     if (videoPlayerRef.current) {
@@ -41,6 +44,10 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
 
   const handleVideoTimeUpdate = useCallback((time: number) => {
     setCurrentVideoTime(time);
+  }, []);
+
+  const handleSubtitlesChange = useCallback((segments: SubtitleSegment[]) => {
+    setEditedSubtitles(segments);
   }, []);
 
   const formatTime = (seconds: number) => {
@@ -115,10 +122,12 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
           </div>
         </div>
 
-        {/* Main Content Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Video Player Section - Responsive for all video ratios */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        {/* Main Content Layout with Resizable Panels */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" style={{ height: 'calc(100vh - 400px)', minHeight: '500px' }}>
+          <Allotment minSize={300}>
+            {/* Video Player Panel */}
+            <Allotment.Pane minSize={300} maxSize={700}>
+              <div className="h-full p-6 bg-white">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
                 <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,38 +135,46 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
                 </svg>
               </div>
               <h2 className="text-xl font-semibold text-gray-800">비디오 플레이어</h2>
-            </div>
-            {project.video_url ? (
-              <div className="rounded-xl overflow-hidden bg-black">
-                {/* Responsive video container that adapts to video aspect ratio */}
-                <div className="relative w-full">
-                  <VideoPlayer 
-                    ref={videoPlayerRef}
-                    src={project.video_url} 
-                    subtitles={parsedSubtitles}
-                    onTimeUpdate={handleVideoTimeUpdate}
-                  />
                 </div>
+                {project.video_url ? (
+                  <div className="rounded-xl overflow-hidden bg-black h-full flex items-center">
+                    <VideoPlayer 
+                      ref={videoPlayerRef}
+                      src={project.video_url} 
+                      subtitles={editedSubtitles}
+                      onTimeUpdate={handleVideoTimeUpdate}
+                    />
+                  </div>
+                ) : (
+                  <div className="bg-gray-100 rounded-xl p-12 text-center h-full flex items-center justify-center">
+                    <div>
+                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-500 font-medium">비디오를 사용할 수 없습니다</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="bg-gray-100 rounded-xl p-12 text-center aspect-video">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <p className="text-gray-500 font-medium">비디오를 사용할 수 없습니다</p>
-              </div>
-            )}
-          </div>
+            </Allotment.Pane>
 
-          {/* Unified Subtitle Viewer */}
-          <UnifiedSubtitleViewer 
-            segments={parsedSubtitles}
-            onSegmentClick={handleSubtitleClick}
-            showOriginal={true}
-            currentTime={currentVideoTime}
-          />
+            {/* Resizable Divider */}
+            <Allotment.Pane minSize={300} maxSize={700}>
+              {/* Enhanced Subtitle Editor */}
+              <div className="h-full p-6 bg-white">
+                <EnhancedSubtitleEditor 
+                  segments={editedSubtitles}
+                  videoUrl={project.video_url}
+                  currentTime={currentVideoTime}
+                  onSegmentClick={handleSubtitleClick}
+                  onSegmentsChange={handleSubtitlesChange}
+                  className="h-full"
+                />
+              </div>
+            </Allotment.Pane>
+          </Allotment>
         </div>
 
 
