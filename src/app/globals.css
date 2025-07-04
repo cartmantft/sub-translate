@@ -3,6 +3,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Allotment resizer styling */
+  --focus-border: #3b82f6;
+  --separator-border: #e5e7eb;
 }
 
 @theme inline {
@@ -23,4 +27,36 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Allotment resizer custom styling */
+.allotment-separator {
+  width: 8px !important;
+  background-color: var(--separator-border) !important;
+  border: 2px solid var(--focus-border) !important;
+  border-radius: 4px !important;
+  cursor: col-resize !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+}
+
+.allotment-separator:hover {
+  background-color: var(--focus-border) !important;
+  opacity: 0.8;
+}
+
+/* Custom animations for video layout */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
 }

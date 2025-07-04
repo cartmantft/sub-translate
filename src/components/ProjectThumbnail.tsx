@@ -1,29 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import VideoThumbnail from './VideoThumbnail';
 import { logger } from '@/lib/utils/logger';
 
 interface ProjectThumbnailProps {
   thumbnailUrl?: string | null;
-  videoUrl?: string | null;
   title?: string;
 }
 
-export default function ProjectThumbnail({ thumbnailUrl, videoUrl, title }: ProjectThumbnailProps) {
-  const [showVideoFallback, setShowVideoFallback] = useState(false);
+export default function ProjectThumbnail({ thumbnailUrl, title }: ProjectThumbnailProps) {
+  const [hasError, setHasError] = useState(false);
 
-  if (showVideoFallback || !thumbnailUrl || thumbnailUrl.trim() === '') {
-    if (videoUrl) {
-      return (
-        <VideoThumbnail
-          videoUrl={videoUrl}
-          alt={`${title || 'Untitled Project'} thumbnail`}
-          className="w-full h-full object-cover"
-        />
-      );
-    }
-    
+  // Show default icon if no thumbnail URL or if image failed to load
+  if (!thumbnailUrl || thumbnailUrl.trim() === '' || hasError) {
     return (
       <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
         <svg className="w-16 h-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,28 +23,20 @@ export default function ProjectThumbnail({ thumbnailUrl, videoUrl, title }: Proj
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', backgroundColor: '#f0f0f0' }}>
+    <div className="relative w-full h-full bg-gray-100">
       <img
         src={thumbnailUrl}
         alt={`${title || 'Untitled Project'} thumbnail`}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          display: 'block'
-        }}
+        className="absolute inset-0 w-full h-full object-cover"
         onError={() => {
           logger.error('Image failed to load', undefined, { component: 'ProjectThumbnail', thumbnailUrl });
-          setShowVideoFallback(true);
+          setHasError(true);
         }}
         onLoad={() => {
           logger.debug('Image loaded successfully', { component: 'ProjectThumbnail', thumbnailUrl });
         }}
       />
-      {!showVideoFallback && (
+      {!hasError && (
         <div className="absolute top-2 left-2 bg-green-600 bg-opacity-75 text-white text-xs px-2 py-1 rounded z-10">
           ✓ THUMBNAIL
         </div>

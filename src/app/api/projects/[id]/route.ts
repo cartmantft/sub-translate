@@ -118,8 +118,9 @@ async function deleteStorageFile(fileUrl: string, bucketName: string, supabase: 
 // PUT method - Update project (edit project name)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const { id } = params;
     const { title } = await request.json();
@@ -203,11 +204,113 @@ export async function PUT(
   }
 }
 
+// PATCH method - Update project subtitles
+export async function PATCH(
+  request: Request,
+  props: { params: Promise<{ id: string }> }
+) {
+  const params = await props.params;
+  const { id } = params;
+  try {
+    const { subtitles } = await request.json();
+    
+    if (!subtitles || !Array.isArray(subtitles)) {
+      return NextResponse.json(
+        { success: false, error: 'Subtitles must be provided as an array' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // First, verify the project exists and belongs to the user
+    const { data: existingProject, error: fetchError } = await supabase
+      .from('projects')
+      .select('id, user_id')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (fetchError || !existingProject) {
+      return NextResponse.json(
+        { success: false, error: 'Project not found or access denied' },
+        { status: 404 }
+      );
+    }
+
+    // Validate subtitle structure
+    const isValidSubtitles = subtitles.every(subtitle => 
+      subtitle && 
+      typeof subtitle === 'object' &&
+      'id' in subtitle &&
+      'startTime' in subtitle &&
+      'endTime' in subtitle &&
+      'text' in subtitle &&
+      typeof subtitle.startTime === 'number' &&
+      typeof subtitle.endTime === 'number' &&
+      typeof subtitle.text === 'string'
+    );
+
+    if (!isValidSubtitles) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid subtitle format. Each subtitle must have id, startTime, endTime, and text' },
+        { status: 400 }
+      );
+    }
+
+    // Update the project subtitles
+    const { data: updatedProject, error: updateError } = await supabase
+      .from('projects')
+      .update({ subtitles })
+      .eq('id', id)
+      .eq('user_id', user.id) // Double-check ownership
+      .select()
+      .single();
+
+    if (updateError) {
+      logger.error('Error updating project subtitles', updateError, { 
+        action: 'updateProjectSubtitles',
+        projectId: id,
+        userId: user.id
+      });
+      return NextResponse.json(
+        { success: false, error: 'Failed to update subtitles' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      project: updatedProject
+    });
+
+  } catch (error) {
+    logger.error('Error in PATCH /api/projects/[id]', error, { 
+      action: 'updateProjectSubtitles',
+      projectId: id
+    });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return NextResponse.json(
+      { success: false, error: 'Internal Server Error', details: errorMessage },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE method - Delete project and all related resources
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const { id } = params;
     const supabase = await createClient();

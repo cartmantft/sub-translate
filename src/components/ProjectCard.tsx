@@ -159,7 +159,6 @@ export default function ProjectCard({ project, onUpdate, onDelete }: ProjectCard
         <div className="relative h-48 overflow-hidden">
           <ProjectThumbnail 
             thumbnailUrl={project.thumbnail_url}
-            videoUrl={project.video_url}
             title={project.title}
           />
           
