@@ -46,7 +46,7 @@ export default function EnhancedSubtitleEditor({
     setSegments(initialSegments);
   }, [initialSegments]);
 
-  // Auto-scroll to current segment (but not while editing)
+  // Auto-scroll to current segment within container only (but not while editing)
   useEffect(() => {
     if (!containerRef.current || currentTime === undefined || editingId !== null) return;
 
@@ -56,13 +56,33 @@ export default function EnhancedSubtitleEditor({
 
     if (currentSegmentIndex !== -1) {
       const segmentElements = containerRef.current.querySelectorAll('[data-segment-index]');
-      const currentElement = segmentElements[currentSegmentIndex];
+      const currentElement = segmentElements[currentSegmentIndex] as HTMLElement;
       
-      if (currentElement) {
-        currentElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
+      if (currentElement && containerRef.current) {
+        // 컨테이너 내부에서만 스크롤하도록 수정
+        const container = containerRef.current;
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = currentElement.getBoundingClientRect();
+        
+        // 요소가 컨테이너 밖에 있는지 확인
+        const isAbove = elementRect.top < containerRect.top;
+        const isBelow = elementRect.bottom > containerRect.bottom;
+        
+        if (isAbove || isBelow) {
+          // 컨테이너 내부의 상대적 위치 계산
+          const containerScrollTop = container.scrollTop;
+          const elementOffsetTop = currentElement.offsetTop;
+          const containerHeight = container.clientHeight;
+          const elementHeight = currentElement.offsetHeight;
+          
+          // 요소를 컨테이너 중앙에 위치시키기
+          const targetScrollTop = elementOffsetTop - (containerHeight / 2) + (elementHeight / 2);
+          
+          container.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: 'smooth'
+          });
+        }
       }
     }
   }, [currentTime, segments, editingId]);

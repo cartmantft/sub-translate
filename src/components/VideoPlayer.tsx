@@ -21,15 +21,17 @@ interface VideoPlayerProps {
   subtitles?: SubtitleSegment[];
   onTimeUpdate?: (currentTime: number) => void;
   onVideoMetadata?: (metadata: VideoMetadata) => void;
+  roundedCorners?: 'all' | 'left' | 'right' | 'none';
+  showSubtitles?: boolean;
 }
 
 export interface VideoPlayerRef {
   jumpToTime: (time: number) => void;
+  getVideoElement: () => HTMLVideoElement | null;
 }
 
-const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitles = [], onTimeUpdate, onVideoMetadata }, ref) => {
+const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitles = [], onTimeUpdate, onVideoMetadata, roundedCorners = 'left', showSubtitles = true }, ref) => {
   const [currentTime, setCurrentTime] = useState(0);
-  const [showSubtitles, setShowSubtitles] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Find current subtitle based on video time
@@ -84,9 +86,10 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
     }
   }, []);
 
-  // Expose jumpToTime function using useImperativeHandle
+  // Expose functions using useImperativeHandle
   useImperativeHandle(ref, () => ({
-    jumpToTime
+    jumpToTime,
+    getVideoElement: () => videoRef.current
   }), [jumpToTime]);
 
   useEffect(() => {
@@ -103,39 +106,93 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
 
   const currentSubtitle = getCurrentSubtitle();
 
+  // Get rounded corner classes and styles based on prop
+  const getRoundedClasses = () => {
+    switch (roundedCorners) {
+      case 'all':
+        return 'rounded-2xl';
+      case 'left':
+        return 'rounded-l-2xl';
+      case 'right':
+        return 'rounded-r-2xl';
+      case 'none':
+        return '';
+      default:
+        return 'rounded-l-2xl';
+    }
+  };
+
+  const getClipPath = () => {
+    switch (roundedCorners) {
+      case 'all':
+        return 'inset(0 round 1rem)';
+      case 'left':
+        return 'inset(0 round 1rem 0 0 1rem)';
+      case 'right':
+        return 'inset(0 round 0 1rem 1rem 0)';
+      case 'none':
+        return 'none';
+      default:
+        return 'inset(0 round 1rem 0 0 1rem)';
+    }
+  };
+
+  const getBorderRadius = () => {
+    switch (roundedCorners) {
+      case 'all':
+        return '1rem';
+      case 'left':
+        return '1rem 0 0 1rem';
+      case 'right':
+        return '0 1rem 1rem 0';
+      case 'none':
+        return '0';
+      default:
+        return '1rem 0 0 1rem';
+    }
+  };
+
+  const roundedClass = getRoundedClasses();
+  const clipPath = getClipPath();
+  const borderRadius = getBorderRadius();
+
   if (!src) {
     return <div>No video source provided.</div>;
   }
 
   return (
-    <div className="relative w-full h-full flex justify-center bg-black overflow-hidden rounded-l-2xl">
-      {/* Video element with rounded corners */}
-      <video 
-        ref={videoRef}
-        controls 
-        className="w-full h-full object-contain rounded-l-2xl"
-        style={{ aspectRatio: 'auto', borderTopLeftRadius: '1rem', borderBottomLeftRadius: '1rem' }}
+    <div 
+      className={`relative w-full h-full ${roundedClass} overflow-hidden`} 
+      style={{ 
+        backgroundColor: 'black',
+        isolation: 'isolate'
+      }}
+    >
+      {/* Video container with clip-path for proper rounded corners */}
+      <div 
+        className="w-full h-full flex items-center justify-center"
+        style={{
+          clipPath: clipPath,
+          WebkitClipPath: clipPath,
+          willChange: 'transform'
+        }}
       >
-        <source src={src} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+        <video 
+          ref={videoRef}
+          className="max-w-full max-h-full object-contain"
+          style={{ 
+            backgroundColor: 'black',
+            borderRadius: borderRadius,
+            WebkitBorderRadius: borderRadius,
+            willChange: 'transform',
+            display: 'block'
+          }}
+        >
+          <source src={src} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      </div>
 
-      {/* Subtitle Controls */}
-      {subtitles.length > 0 && (
-        <div className="absolute top-2 right-2 z-10">
-          <button
-            onClick={() => setShowSubtitles(!showSubtitles)}
-            className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
-              showSubtitles 
-                ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                : 'bg-gray-600 text-white hover:bg-gray-700'
-            }`}
-            title={showSubtitles ? "자막 숨기기" : "자막 보이기"}
-          >
-            {showSubtitles ? "자막 ON" : "자막 OFF"}
-          </button>
-        </div>
-      )}
 
       {/* Subtitle Overlay */}
       {showSubtitles && currentSubtitle && (
@@ -148,17 +205,6 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ src, subtitl
         </div>
       )}
 
-      {/* Enhanced Subtitle Progress Indicator */}
-      {subtitles.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-800 bg-opacity-75 shadow-sm">
-          <div 
-            className="h-full bg-blue-500 shadow-sm transition-all duration-100"
-            style={{
-              width: `${(currentTime / (subtitles[subtitles.length - 1]?.endTime || 1)) * 100}%`
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 });

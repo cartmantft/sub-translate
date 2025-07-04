@@ -298,7 +298,7 @@ export default function MainContent() {
                     <h2 className="text-lg font-semibold text-white text-center">업로드된 비디오</h2>
                   </div>
                   <div className="p-4">
-                    <VideoPlayer ref={videoPlayerRef} src={videoSrc} subtitles={subtitles} onTimeUpdate={handleVideoTimeUpdate} />
+                    <VideoPlayer ref={videoPlayerRef} src={videoSrc} subtitles={subtitles} onTimeUpdate={handleVideoTimeUpdate} roundedCorners="all" />
                   </div>
                 </div>
 
@@ -375,7 +375,7 @@ export default function MainContent() {
                 <h2 className="text-xl font-semibold text-white text-center">업로드된 비디오</h2>
               </div>
               <div className="p-6">
-                <VideoPlayer ref={videoPlayerRef} src={videoSrc} onTimeUpdate={handleVideoTimeUpdate} />
+                <VideoPlayer ref={videoPlayerRef} src={videoSrc} onTimeUpdate={handleVideoTimeUpdate} roundedCorners="all" />
               </div>
             </div>
           )}

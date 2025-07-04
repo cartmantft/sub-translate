@@ -35,6 +35,49 @@ export default function ResizablePanels({
     }
   }, [defaultLeftWidth, userHasAdjusted]);
 
+  // 화면 크기 변경 시 최소값 검증 및 조정
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const handleResize = () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const containerWidth = container.getBoundingClientRect().width;
+      const currentLeftWidthPx = (leftWidth / 100) * containerWidth;
+      const currentRightWidthPx = containerWidth - currentLeftWidthPx;
+
+      // 최소값을 위반하는 경우 조정
+      if (currentLeftWidthPx < minLeftWidth || currentRightWidthPx < minRightWidth) {
+        const maxAllowedLeftWidthPx = containerWidth - minRightWidth;
+        const minAllowedLeftWidthPx = minLeftWidth;
+        
+        let newLeftWidthPx = Math.max(minAllowedLeftWidthPx, Math.min(currentLeftWidthPx, maxAllowedLeftWidthPx));
+        let newLeftWidthPercent = (newLeftWidthPx / containerWidth) * 100;
+        
+        // maxLeftWidth 제한 적용
+        newLeftWidthPercent = Math.min(newLeftWidthPercent, maxLeftWidth);
+        
+        setLeftWidth(newLeftWidthPercent);
+        onLayoutChange?.(newLeftWidthPercent);
+      }
+    };
+
+    // 디바운싱을 위한 타이머
+    let resizeTimer: NodeJS.Timeout;
+    const debouncedResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(handleResize, 100);
+    };
+
+    window.addEventListener('resize', debouncedResize);
+    
+    return () => {
+      window.removeEventListener('resize', debouncedResize);
+      clearTimeout(resizeTimer);
+    };
+  }, [leftWidth, minLeftWidth, minRightWidth, maxLeftWidth, onLayoutChange]);
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -84,8 +127,11 @@ export default function ResizablePanels({
     <div ref={containerRef} className={`flex h-full relative ${className}`}>
       {/* Left Panel */}
       <div 
-        className="h-full overflow-hidden rounded-l-2xl"
-        style={{ width: `${leftWidth}%` }}
+        className="h-full overflow-hidden bg-black"
+        style={{ 
+          width: `${leftWidth}%`,
+          isolation: 'isolate'
+        }}
       >
         {leftPanel}
       </div>
@@ -108,8 +154,11 @@ export default function ResizablePanels({
 
       {/* Right Panel */}
       <div 
-        className="h-full overflow-hidden flex-1 rounded-r-2xl"
-        style={{ width: `${100 - leftWidth}%` }}
+        className="h-full overflow-hidden flex-1 bg-white"
+        style={{ 
+          width: `${100 - leftWidth}%`,
+          isolation: 'isolate'
+        }}
       >
         {rightPanel}
       </div>
