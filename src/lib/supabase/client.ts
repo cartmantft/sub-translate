@@ -31,7 +31,7 @@ export function createClient() {
         },
       },
       auth: {
-        detectSessionInUrl: false,
+        detectSessionInUrl: true, // OAuth 콜백 URL 세션 감지 활성화
         persistSession: !isDevelopment, // 개발 환경에서는 세션 지속 비활성화
         autoRefreshToken: true,
         storage: isDevelopment ? memoryStorage : undefined, // 개발 환경에서는 메모리 스토리지 사용

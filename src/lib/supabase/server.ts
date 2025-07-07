@@ -32,7 +32,7 @@ export async function createClient() {
         },
       },
       auth: {
-        detectSessionInUrl: false,
+        detectSessionInUrl: true, // OAuth 콜백 URL 세션 감지 활성화
         persistSession: true,  // 기본값으로 되돌림
         autoRefreshToken: true,
       },
