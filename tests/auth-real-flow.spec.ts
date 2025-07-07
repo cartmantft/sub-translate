@@ -79,7 +79,7 @@ test.describe('실제 로그인 플로우 테스트', () => {
     
     // 2. 로그아웃 (직접 API 호출로 로그아웃)
     await page.evaluate(() => {
-      return fetch('/auth/logout', { method: 'POST' });
+      return fetch('/api/auth/signout', { method: 'POST' });
     });
     console.log('🚪 로그아웃 API 호출');
     

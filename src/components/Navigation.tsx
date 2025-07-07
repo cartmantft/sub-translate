@@ -11,6 +11,7 @@ import { useCsrfToken, fetchWithCsrf } from '@/hooks/useCsrfToken';
 export default function Navigation() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
   const pathname = usePathname();
   const supabase = createClient();
   
@@ -56,36 +57,71 @@ export default function Navigation() {
   }, [supabase.auth]);
 
   const handleSignOut = async () => {
+    if (signingOut) return; // Prevent double-clicks
+    
     try {
-      // Clear local state immediately
+      setSigningOut(true);
+      
+      // Clear local state immediately for instant UI feedback
       setUser(null);
+      
+      // First, try to sign out via Supabase client (clears local session/tokens)
+      const { error: supabaseError } = await supabase.auth.signOut();
+      if (supabaseError) {
+        logger.warn('Supabase signOut failed, continuing with API fallback', supabaseError, { component: 'Navigation', action: 'handleSignOut' });
+      }
       
       // Get CSRF token for secure API request
       let response;
-      if (csrfError) {
-        logger.warn('CSRF system unavailable during signout, attempting without token', { component: 'Navigation', action: 'handleSignOut', csrfError });
-        // Fallback to regular fetch if CSRF system is unavailable
-        response = await fetch('/api/auth/signout', {
-          method: 'POST',
-        });
-      } else {
-        const csrfToken = await getToken();
-        // Call API endpoint to sign out and clear cookies with CSRF protection
-        response = await fetchWithCsrf('/api/auth/signout', {
-          method: 'POST',
-        }, csrfToken);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Logout timeout')), 5000)
+      );
+      
+      try {
+        const logoutPromise = async () => {
+          if (csrfError) {
+            logger.warn('CSRF system unavailable during signout, attempting without token', { component: 'Navigation', action: 'handleSignOut', csrfError });
+            // Fallback to regular fetch if CSRF system is unavailable
+            return fetch('/api/auth/signout', {
+              method: 'POST',
+            });
+          } else {
+            const csrfToken = await getToken();
+            // Call API endpoint to sign out and clear cookies with CSRF protection
+            return fetchWithCsrf('/api/auth/signout', {
+              method: 'POST',
+            }, csrfToken);
+          }
+        };
+        
+        response = await Promise.race([logoutPromise(), timeoutPromise]);
+        
+        if (!response.ok) {
+          logger.error('API signout failed', undefined, { 
+            component: 'Navigation', 
+            action: 'handleSignOut',
+            status: response.status,
+            statusText: response.statusText
+          });
+        }
+      } catch (error) {
+        logger.error('Logout API call failed or timed out', error, { component: 'Navigation', action: 'handleSignOut' });
       }
       
-      if (!response.ok) {
-        logger.error('Failed to sign out', undefined, { component: 'Navigation', action: 'handleSignOut' });
-      }
-      
-      // Force a complete page reload to clear all state
+      // Force a complete page reload to clear all state regardless of API call result
       window.location.href = '/';
     } catch (error) {
       logger.error('Unexpected error during sign out', error, { component: 'Navigation', action: 'handleSignOut' });
+      // Fallback: try direct Supabase signOut and redirect
+      try {
+        await supabase.auth.signOut();
+      } catch (fallbackError) {
+        logger.error('Fallback signOut also failed', fallbackError, { component: 'Navigation', action: 'handleSignOut' });
+      }
       // Still try to redirect even if there's an error
       window.location.href = '/';
+    } finally {
+      setSigningOut(false);
     }
   };
 
@@ -154,9 +190,23 @@ export default function Navigation() {
               </div>
               <button 
                 onClick={handleSignOut}
-                className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                disabled={signingOut}
+                className={`px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5 flex items-center gap-2 ${
+                  signingOut 
+                    ? 'bg-gray-500 cursor-not-allowed opacity-70'
+                    : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'
+                }`}
               >
-                로그아웃
+                {signingOut ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    로그아웃 중...
+                  </>
+                ) : (
+                  '로그아웃'
+                )}
               </button>
             </>
           ) : (
