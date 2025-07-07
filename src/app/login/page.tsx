@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { logger } from '@/lib/utils/logger';
+import { getAuthErrorMessage, getApiErrorMessage } from '@/lib/utils/auth-error-messages';
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -20,32 +21,7 @@ export default function LoginPage() {
     const errorDescription = urlParams.get('error_description');
     
     if (error) {
-      let message = '로그인 중 오류가 발생했습니다.';
-      
-      switch (error) {
-        case 'invalid_credentials':
-        case 'invalid_grant':
-          message = '이메일 또는 비밀번호가 올바르지 않습니다.';
-          break;
-        case 'email_not_confirmed':
-          message = '이메일 인증이 필요합니다. 이메일을 확인해주세요.';
-          break;
-        case 'too_many_requests':
-          message = '너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
-          break;
-        case 'signup_disabled':
-          message = '현재 회원가입이 비활성화되어 있습니다.';
-          break;
-        case 'access_denied':
-          message = '로그인이 취소되었습니다.';
-          break;
-        default:
-          if (errorDescription) {
-            message = process.env.NODE_ENV === 'development' 
-              ? errorDescription 
-              : '로그인 중 오류가 발생했습니다. 다시 시도해주세요.';
-          }
-      }
+      const message = getAuthErrorMessage(error, errorDescription);
       
       setErrorMessage(message);
       logger.warn('Login error from URL params', undefined, { 
@@ -128,27 +104,12 @@ export default function LoginPage() {
           : args[0] instanceof URL 
             ? args[0].href 
             : args[0].url;
-        if (url.includes('/auth/v1/token') && !response.ok) {
+        if ((url.includes('/auth/v1/token') || url.includes('/auth/v1/authorize') || url.includes('/auth/v1/sign_in')) && !response.ok) {
           // Use a timeout to ensure the error message shows after any Auth UI processing
           setTimeout(async () => {
             try {
               const errorData = await response.clone().json().catch(() => ({}));
-              let message = '로그인 중 오류가 발생했습니다.';
-              
-              if (response.status === 400) {
-                const errorText = errorData.error_description || errorData.message || '';
-                
-                if (errorText.includes('Invalid login credentials') || 
-                    errorText.includes('invalid_grant')) {
-                  message = '🚫 이메일 또는 비밀번호가 올바르지 않습니다.';
-                } else if (errorText.includes('Email not confirmed')) {
-                  message = '📧 이메일 인증이 필요합니다. 이메일을 확인해주세요.';
-                } else if (errorText.includes('too many requests')) {
-                  message = '⏰ 너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
-                } else {
-                  message = '❌ 로그인 정보를 확인해주세요.';
-                }
-              }
+              const message = getApiErrorMessage(response.status, errorData);
               
               // Force error message with multiple state updates to ensure visibility
               setErrorMessage(message);
@@ -216,6 +177,7 @@ export default function LoginPage() {
           <div className="p-8">
             {/* Error Message - Enhanced visibility with forced rendering */}
             <div 
+              data-testid="login-error-message"
               className={`mb-6 transition-all duration-300 ${
                 errorMessage 
                   ? 'opacity-100 max-h-96 p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-lg' 
