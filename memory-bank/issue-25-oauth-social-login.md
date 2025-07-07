@@ -100,12 +100,12 @@ The OAuth social login (Google and GitHub) integration is failing because `detec
 6. ❌ OAuth provider not enabled error: "Unsupported provider: provider is not enabled"
 
 **Test URLs Generated:**
-- Google: `https://zzzdgxlisqlgptymtmsg.supabase.co/auth/v1/authorize?provider=google&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback&code_challenge=...`
-- GitHub: `https://zzzdgxlisqlgptymtmsg.supabase.co/auth/v1/authorize?provider=github&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback&code_challenge=...`
+- Google: `https://<YOUR_SUPABASE_PROJECT_ID>.supabase.co/auth/v1/authorize?provider=google&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback&code_challenge=...`
+- GitHub: `https://<YOUR_SUPABASE_PROJECT_ID>.supabase.co/auth/v1/authorize?provider=github&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback&code_challenge=...`
 
 ### Configuration Steps Required
 1. **Enable OAuth Providers in Supabase Dashboard:**
-   - Go to: https://supabase.com/dashboard/project/zzzdgxlisqlgptymtmsg/auth/providers
+   - Go to: https://supabase.com/dashboard/project/<YOUR_SUPABASE_PROJECT_ID>/auth/providers
    - Enable Google OAuth provider
    - Enable GitHub OAuth provider
    - Configure OAuth app credentials

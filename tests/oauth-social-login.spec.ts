@@ -72,7 +72,7 @@ test.describe('OAuth Social Login Flow Tests', () => {
     await page.goto('/login?error=validation_failed&error_description=Unsupported%20provider%3A%20provider%20is%20not%20enabled');
     
     // Wait for error message to appear
-    const errorMessage = page.locator('[class*="text-red-800"]');
+    const errorMessage = page.getByTestId('login-error-message');
     await expect(errorMessage).toBeVisible({ timeout: 5000 });
     
     // Verify the error message content
@@ -160,8 +160,9 @@ test.describe('OAuth Social Login Flow Tests', () => {
     // Navigate with OAuth error
     await page.goto('/login?error=validation_failed&error_description=provider%20is%20not%20enabled');
     
-    // Wait a bit for console messages to be logged
-    await page.waitForTimeout(1000);
+    // Wait for error message to be visible (which indicates processing is complete)
+    const errorMessage = page.getByTestId('login-error-message');
+    await expect(errorMessage).toBeVisible({ timeout: 5000 });
     
     // Verify error logging occurred (note: we can't check exact logger calls, but can verify error handling)
     const hasOAuthError = consoleMessages.some(msg => 
