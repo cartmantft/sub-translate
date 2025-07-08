@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { generateSRT, generateVTT, downloadFile } from '@/lib/subtitleExport';
 
 interface SubtitleSegment {
@@ -170,7 +171,7 @@ export default function ProjectActionsPanel({
 
       {/* New Project Link */}
       <div className="border-t border-gray-100 pt-4 mt-6">
-        <a
+        <Link
           href="/"
           className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-700 transition-colors duration-200 text-sm"
         >
@@ -178,7 +179,7 @@ export default function ProjectActionsPanel({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
           새 프로젝트 시작하기
-        </a>
+        </Link>
       </div>
     </div>
   );

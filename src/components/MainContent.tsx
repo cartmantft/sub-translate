@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import FileUploader from '@/components/FileUploader';
 import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer';
 import CompactSuccessBanner from '@/components/CompactSuccessBanner';
@@ -67,7 +67,6 @@ export default function MainContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<ProcessStep>('upload');
-  const [currentVideoTime, setCurrentVideoTime] = useState(0);
   
   // CSRF token management for secure API requests
   const { getToken, error: csrfError } = useCsrfToken();
@@ -215,15 +214,6 @@ export default function MainContent() {
     }
   };
 
-  const handleSubtitleClick = useCallback((startTime: number) => {
-    if (videoPlayerRef.current) {
-      videoPlayerRef.current.jumpToTime(startTime);
-    }
-  }, []);
-
-  const handleVideoTimeUpdate = useCallback((time: number) => {
-    setCurrentVideoTime(time);
-  }, []);
 
 
   return (
@@ -293,7 +283,6 @@ export default function MainContent() {
               {/* Success Banner */}
               {projectId && (
                 <CompactSuccessBanner
-                  projectId={projectId}
                   projectTitle={`Video Project - ${new Date().toISOString().split('T')[0]}`}
                   subtitleCount={subtitles.length}
                   videoDuration={subtitles.length > 0 ? subtitles[subtitles.length - 1]?.endTime : 0}
@@ -314,7 +303,6 @@ export default function MainContent() {
                         ref={videoPlayerRef} 
                         src={videoSrc} 
                         subtitles={subtitles} 
-                        onTimeUpdate={handleVideoTimeUpdate} 
                         roundedCorners="all" 
                       />
                     </div>
@@ -358,7 +346,7 @@ export default function MainContent() {
                 <h2 className="text-xl font-semibold text-white text-center">업로드된 비디오</h2>
               </div>
               <div className="p-6">
-                <VideoPlayer ref={videoPlayerRef} src={videoSrc} onTimeUpdate={handleVideoTimeUpdate} roundedCorners="all" />
+                <VideoPlayer ref={videoPlayerRef} src={videoSrc} roundedCorners="all" />
               </div>
             </div>
           )}

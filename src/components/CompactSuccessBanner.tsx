@@ -2,16 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-interface SubtitleSegment {
-  id: string;
-  startTime: number;
-  endTime: number;
-  text: string;
-  originalText?: string;
-}
-
 interface CompactSuccessBannerProps {
-  projectId: string;
   projectTitle: string;
   subtitleCount: number;
   videoDuration?: number;
@@ -20,7 +11,6 @@ interface CompactSuccessBannerProps {
 }
 
 export default function CompactSuccessBanner({
-  projectId,
   projectTitle,
   subtitleCount,
   videoDuration,
