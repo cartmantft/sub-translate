@@ -7,9 +7,8 @@ import { AdminUserManager, validateAdminPrivileges } from '@/lib/utils/admin-val
 // POST method - Admin user management actions
 export async function POST(
   request: Request,
-  props: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const params = await props.params;
   try {
     const { id: targetUserId } = params;
     const { action, banDurationHours } = await request.json();
@@ -148,9 +147,8 @@ export async function POST(
 // GET method - Get user status information (for admin)
 export async function GET(
   request: Request,
-  props: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const params = await props.params;
   try {
     const { id: targetUserId } = params;
 

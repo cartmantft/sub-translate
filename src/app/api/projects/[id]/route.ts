@@ -371,7 +371,7 @@ export async function DELETE(
       
       return NextResponse.json(
         { success: false, error: 'Account access denied', code: 'USER_ACCOUNT_INVALID' },
-        { status: 401 }
+        { status: 403 }
       );
     }
 
