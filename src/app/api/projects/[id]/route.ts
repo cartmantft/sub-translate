@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger';
+import { validateUserStatus } from '@/lib/utils/user-validation';
 
 // Helper function to extract file path from Supabase Storage URL
 function extractStorageFilePath(url: string): string | null {
@@ -150,6 +151,23 @@ export async function PUT(
       );
     }
 
+    // Additional security check: validate user status
+    const userStatus = await validateUserStatus(user.id);
+    if (!userStatus.isValid) {
+      logger.error('Security violation: Invalid user attempted project update', {
+        action: 'updateProject',
+        userId: user.id,
+        projectId: id,
+        reason: userStatus.reason,
+        securityEvent: 'invalid_user_api_access_blocked'
+      });
+      
+      return NextResponse.json(
+        { success: false, error: 'Account access denied', code: 'USER_ACCOUNT_INVALID' },
+        { status: 403 }
+      );
+    }
+
     // First, verify the project exists and belongs to the user
     const { data: existingProject, error: fetchError } = await supabase
       .from('projects')
@@ -228,6 +246,23 @@ export async function PATCH(
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Additional security check: validate user status
+    const userStatus = await validateUserStatus(user.id);
+    if (!userStatus.isValid) {
+      logger.error('Security violation: Invalid user attempted subtitle update', {
+        action: 'updateProjectSubtitles',
+        userId: user.id,
+        projectId: id,
+        reason: userStatus.reason,
+        securityEvent: 'invalid_user_api_access_blocked'
+      });
+      
+      return NextResponse.json(
+        { success: false, error: 'Account access denied', code: 'USER_ACCOUNT_INVALID' },
+        { status: 403 }
       );
     }
 
@@ -320,6 +355,23 @@ export async function DELETE(
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Additional security check: validate user status
+    const userStatus = await validateUserStatus(user.id);
+    if (!userStatus.isValid) {
+      logger.error('Security violation: Invalid user attempted project deletion', {
+        action: 'deleteProject',
+        userId: user.id,
+        projectId: id,
+        reason: userStatus.reason,
+        securityEvent: 'invalid_user_api_access_blocked'
+      });
+      
+      return NextResponse.json(
+        { success: false, error: 'Account access denied', code: 'USER_ACCOUNT_INVALID' },
+        { status: 403 }
       );
     }
 
