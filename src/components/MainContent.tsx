@@ -3,8 +3,8 @@
 import { useState, useRef, useCallback } from 'react';
 import FileUploader from '@/components/FileUploader';
 import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer';
-import UnifiedSubtitleViewer from '@/components/UnifiedSubtitleViewer';
-import SubtitleExportButtons from '@/components/SubtitleExportButtons';
+import CompactSuccessBanner from '@/components/CompactSuccessBanner';
+import ProjectActionsPanel from '@/components/ProjectActionsPanel';
 import StepIndicator, { ProcessStep } from '@/components/StepIndicator';
 import toast from 'react-hot-toast';
 import { logger } from '@/lib/utils/logger';
@@ -290,80 +290,63 @@ export default function MainContent() {
 
           {transcription && subtitles.length > 0 && !loading && (
             <div className="space-y-6">
-              {/* Top Row: Video and Subtitles side by side */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-                {/* Video Section */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3">
-                    <h2 className="text-lg font-semibold text-white text-center">업로드된 비디오</h2>
-                  </div>
-                  <div className="p-4">
-                    <VideoPlayer ref={videoPlayerRef} src={videoSrc} subtitles={subtitles} onTimeUpdate={handleVideoTimeUpdate} roundedCorners="all" />
-                  </div>
-                </div>
-
-                {/* Unified Subtitle Viewer */}
-                <UnifiedSubtitleViewer 
-                  segments={subtitles}
-                  onSegmentClick={handleSubtitleClick}
-                  showOriginal={true}
-                  currentTime={currentVideoTime}
+              {/* Success Banner */}
+              {projectId && (
+                <CompactSuccessBanner
+                  projectId={projectId}
+                  projectTitle={`Video Project - ${new Date().toISOString().split('T')[0]}`}
+                  subtitleCount={subtitles.length}
+                  videoDuration={subtitles.length > 0 ? subtitles[subtitles.length - 1]?.endTime : 0}
+                  createdAt={new Date().toISOString()}
                 />
-              </div>
+              )}
 
-              {/* Bottom Row: Download Section and Project Status */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-                {/* Enhanced Download Section */}
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 shadow-sm border border-indigo-100">
-                  <div className="text-center mb-4">
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-lg mb-3">
-                      <svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
+              {/* Main Content: Video Player and Actions */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Video Section - Takes 2 columns on large screens */}
+                <div className="lg:col-span-2">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3">
+                      <h2 className="text-lg font-semibold text-white text-center">자막이 포함된 비디오</h2>
                     </div>
-                    <h2 className="text-xl font-bold text-gray-800 mb-1">자막이 준비되었습니다!</h2>
-                    <p className="text-gray-600 text-sm">원하는 형식으로 자막 파일을 다운로드하세요</p>
+                    <div className="p-4">
+                      <VideoPlayer 
+                        ref={videoPlayerRef} 
+                        src={videoSrc} 
+                        subtitles={subtitles} 
+                        onTimeUpdate={handleVideoTimeUpdate} 
+                        roundedCorners="all" 
+                      />
+                    </div>
                   </div>
-                  <SubtitleExportButtons 
-                    subtitles={subtitles} 
-                    projectTitle={`Video Project - ${new Date().toISOString().split('T')[0]}`} 
-                  />
                 </div>
 
-                {/* Project Success Section */}
-                {projectId && (
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6">
-                    <div className="text-center">
-                      <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-3">
-                        <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-bold text-green-800 mb-2">프로젝트 저장 완료!</h3>
-                      <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                        <a 
-                          href={`/project/${projectId}`}
-                          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg text-sm"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                {/* Actions Panel - Takes 1 column on large screens */}
+                <div className="lg:col-span-1">
+                  {projectId ? (
+                    <ProjectActionsPanel
+                      projectId={projectId}
+                      projectTitle={`Video Project - ${new Date().toISOString().split('T')[0]}`}
+                      subtitles={subtitles}
+                      autoRedirectSeconds={5}
+                      onAutoRedirect={() => {
+                        window.location.href = `/project/${projectId}`;
+                      }}
+                    />
+                  ) : (
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                      <div className="text-center">
+                        <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
+                          <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          프로젝트 상세보기
-                        </a>
-                        <a 
-                          href="/dashboard"
-                          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md text-sm"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                          </svg>
-                          대시보드로 이동
-                        </a>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">프로젝트 저장 중...</h3>
+                        <p className="text-gray-500 text-sm">잠시 기다려주세요</p>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           )}
