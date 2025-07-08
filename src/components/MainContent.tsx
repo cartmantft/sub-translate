@@ -3,8 +3,6 @@
 import { useState, useRef } from 'react';
 import FileUploader from '@/components/FileUploader';
 import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer';
-import CompactSuccessBanner from '@/components/CompactSuccessBanner';
-import ProjectActionsPanel from '@/components/ProjectActionsPanel';
 import StepIndicator, { ProcessStep } from '@/components/StepIndicator';
 import toast from 'react-hot-toast';
 import { logger } from '@/lib/utils/logger';
@@ -63,7 +61,6 @@ export default function MainContent() {
   const [videoSrc, setVideoSrc] = useState('');
   const [transcription, setTranscription] = useState('');
   const [subtitles, setSubtitles] = useState<SubtitleSegment[]>([]); // To store unified segments
-  const [projectId, setProjectId] = useState<string | null>(null); // To store the ID of the created project
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<ProcessStep>('upload');
@@ -188,9 +185,13 @@ export default function MainContent() {
         throw new Error(result.error || 'Failed to save project via API');
       }
 
-      toast.success('프로젝트가 성공적으로 저장되었습니다!', { id: loadingToastId });
-      setProjectId(result.projectId);
-      logger.info('Project saved successfully', { component: 'MainContent', action: 'handleUploadSuccess', projectId: result.projectId });
+      toast.success('프로젝트가 저장되었습니다! 편집 페이지로 이동합니다.', { id: loadingToastId });
+      logger.info('Project saved successfully, redirecting to edit page', { component: 'MainContent', action: 'handleUploadSuccess', projectId: result.projectId });
+      
+      // Immediate redirect to project edit page
+      setTimeout(() => {
+        window.location.href = `/project/${result.projectId}`;
+      }, 1000); // 1초 후 리다이렉트 (토스트 메시지 확인 시간)
 
     } catch (err) {
       logger.error('Error processing video', err, { component: 'MainContent', action: 'handleUploadSuccess', videoUrl: url });
@@ -278,66 +279,6 @@ export default function MainContent() {
             </div>
           )}
 
-          {transcription && subtitles.length > 0 && !loading && (
-            <div className="space-y-6">
-              {/* Success Banner */}
-              {projectId && (
-                <CompactSuccessBanner
-                  projectTitle={`Video Project - ${new Date().toISOString().split('T')[0]}`}
-                  subtitleCount={subtitles.length}
-                  videoDuration={subtitles.length > 0 ? subtitles[subtitles.length - 1]?.endTime : 0}
-                  createdAt={new Date().toISOString()}
-                />
-              )}
-
-              {/* Main Content: Video Player and Actions */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Video Section - Takes 2 columns on large screens */}
-                <div className="lg:col-span-2">
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3">
-                      <h2 className="text-lg font-semibold text-white text-center">자막이 포함된 비디오</h2>
-                    </div>
-                    <div className="p-4">
-                      <VideoPlayer 
-                        ref={videoPlayerRef} 
-                        src={videoSrc} 
-                        subtitles={subtitles} 
-                        roundedCorners="all" 
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions Panel - Takes 1 column on large screens */}
-                <div className="lg:col-span-1">
-                  {projectId ? (
-                    <ProjectActionsPanel
-                      projectId={projectId}
-                      projectTitle={`Video Project - ${new Date().toISOString().split('T')[0]}`}
-                      subtitles={subtitles}
-                      autoRedirectSeconds={5}
-                      onAutoRedirect={() => {
-                        window.location.href = `/project/${projectId}`;
-                      }}
-                    />
-                  ) : (
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                      <div className="text-center">
-                        <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
-                          <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-2">프로젝트 저장 중...</h3>
-                        <p className="text-gray-500 text-sm">잠시 기다려주세요</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Loading state shows video section only */}
           {!transcription && !loading && (

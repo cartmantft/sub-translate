@@ -9,6 +9,7 @@ import VideoControls from '@/components/VideoControls';
 import EnhancedSubtitleEditor from '@/components/EnhancedSubtitleEditor';
 import { calculateOptimalLayout, getLayoutRecommendation, getVideoTypeIcon } from '@/lib/layout-utils';
 import { useBreakpoint, useScreenWidth } from '@/hooks/useMediaQuery';
+import { exportVideoWithSubtitles } from '@/lib/subtitleExport';
 
 interface SubtitleSegment {
   id: string;
@@ -172,6 +173,19 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
     }
   }, []);
 
+  const handleVideoExport = useCallback(async () => {
+    try {
+      // Get current view mode from subtitle editor
+      const subtitleEditor = document.querySelector('[data-subtitle-editor]') as HTMLElement;
+      const currentViewMode = subtitleEditor?.dataset.currentViewMode as 'translation' | 'original' | 'both' || 'translation';
+      
+      await exportVideoWithSubtitles(project.video_url, editedSubtitles, project.title, currentViewMode);
+    } catch (error) {
+      console.error('Error exporting video:', error);
+      alert('비디오 다운로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
+  }, [project.video_url, project.title, editedSubtitles]);
+
   const handleLayoutChange = useCallback((leftWidthPercent: number) => {
     // Optional: Save user's layout preference to localStorage
     // localStorage.setItem(`layout-${project.id}`, leftWidthPercent.toString());
@@ -208,23 +222,37 @@ export default function ProjectPageContent({ project, parsedSubtitles }: Project
             </h1>
           </div>
           
-          <div className="flex items-center gap-6 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-6">
+            {/* Project Stats */}
+            <div className="flex items-center gap-6 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{totalDuration > 0 ? `${formatTime(totalDuration)}` : '00:00'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10M7 4L5.5 6M17 4l1.5 2" />
+                </svg>
+                <span>{parsedSubtitles.length}개 자막</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-green-600 font-medium">완료</span>
+              </div>
+            </div>
+            
+            {/* Video Export Button */}
+            <button
+              onClick={handleVideoExport}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span>{totalDuration > 0 ? `${formatTime(totalDuration)}` : '00:00'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10M7 4L5.5 6M17 4l1.5 2" />
-              </svg>
-              <span>{parsedSubtitles.length}개 자막</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-green-600 font-medium">완료</span>
-            </div>
+              Video Export
+            </button>
           </div>
         </div>
       </div>

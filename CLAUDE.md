@@ -153,6 +153,20 @@ GOOGLE_API_KEY=your_google_api_key
 - ✅ **SECURITY TESTING TOOLS**: Development utilities for security validation and penetration testing
 - ✅ **ENTERPRISE-GRADE SESSION SECURITY**: Zero-tolerance policy for deleted/banned user access
 
+### Latest UI/UX Enhancement (2025-07-08) - SMART VIDEO EXPORT FEATURE ✅
+- 🎯 **INTELLIGENT VIDEO EXPORT**: Video Export button now respects subtitle editor tab selection
+- ✅ **CONTEXT-AWARE DOWNLOADS**: Downloads change based on active tab (번역/원본/모두보기)
+- ✅ **FILENAME DIFFERENTIATION**: Automatic filename suffixes (_original, _both) for clarity
+- ✅ **DUAL FORMAT SUPPORT**: Video + SRT subtitle combinations for universal compatibility
+- ✅ **SEAMLESS INTEGRATION**: Real-time tab detection without complex state management
+- ✅ **USER-CENTRIC DESIGN**: Intuitive behavior matching user's current viewing context
+
+### Code Quality Enhancement (2025-07-08) - GEMINI CODE ASSIST FEEDBACK APPLIED ✅
+- ✅ **API ROUTE MODERNIZATION**: Updated Next.js App Router function signatures to current patterns
+- ✅ **PARAMETER DESTRUCTURING**: Removed outdated `await props.params` pattern for direct destructuring
+- ✅ **HTTP STATUS CONSISTENCY**: Fixed authorization error status codes (401 → 403) for semantic accuracy
+- ✅ **ENTERPRISE CODE STANDARDS**: Applied AI code review feedback for production-ready quality
+
 
 # CLAUDE's Memory Bank
 

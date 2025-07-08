@@ -182,7 +182,7 @@ export default function EnhancedSubtitleEditor({
   };
 
   return (
-    <div className={`flex flex-col h-full ${className}`}>
+    <div className={`flex flex-col h-full ${className}`} data-subtitle-editor data-current-view-mode={viewMode}>
       {/* Header with save button */}
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <h2 className="text-xl font-semibold">자막 편집기</h2>
