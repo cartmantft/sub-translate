@@ -4,7 +4,6 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import crypto from 'crypto';
 import { logger } from '@/lib/utils/logger';
-import { validateUserStatus } from '@/lib/utils/user-validation';
 
 // Thumbnail generation function - server-side implementation with ffmpeg
 async function generateThumbnail(videoUrl: string, supabase: Awaited<ReturnType<typeof createClient>>): Promise<string | null> {
@@ -140,23 +139,6 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Additional security check: validate user status
-    const userStatus = await validateUserStatus(user.id);
-    if (!userStatus.isValid) {
-      logger.error('Security violation: Invalid user attempted API access', {
-        action: 'createProject',
-        userId: user.id,
-        reason: userStatus.reason,
-        securityEvent: 'invalid_user_api_access_blocked'
-      });
-      
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Account access denied',
-        code: 'USER_ACCOUNT_INVALID'
-      }, { status: 403 });
     }
 
     // Generate thumbnail URL

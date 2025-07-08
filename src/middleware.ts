@@ -1,8 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { csrfMiddleware } from '@/lib/middleware/csrf'
-import { validateUserStatus } from '@/lib/utils/user-validation'
-import { logger } from '@/lib/utils/logger'
 
 // Security headers configuration
 const securityHeaders = {
@@ -147,51 +145,7 @@ export async function middleware(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       // Session exists but user is invalid - clear and redirect
-      logger.warn('Invalid session detected', {
-        action: 'middleware_auth_check',
-        path: request.nextUrl.pathname,
-        reason: 'no_user_from_jwt'
-      });
       return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    // Additional security check: validate user status in database
-    const userStatus = await validateUserStatus(user.id);
-    if (!userStatus.isValid) {
-      // User is deleted, banned, or invalid - force logout
-      logger.error('Security violation: Invalid user attempted access', {
-        action: 'middleware_security_check',
-        userId: user.id,
-        path: request.nextUrl.pathname,
-        reason: userStatus.reason,
-        userAgent: request.headers.get('user-agent'),
-        securityEvent: 'invalid_user_access_blocked'
-      });
-
-      // Create response that clears auth cookies and redirects
-      const redirectResponse = NextResponse.redirect(new URL('/login', request.url));
-      
-      // Clear Supabase auth cookies for security
-      const authCookiePatterns = [
-        'sb-access-token',
-        'sb-refresh-token', 
-        'sb-auth-token',
-        'supabase-auth-token',
-        'auth-token'
-      ];
-      
-      authCookiePatterns.forEach(cookieName => {
-        redirectResponse.cookies.set(cookieName, '', {
-          path: '/',
-          maxAge: 0,
-          expires: new Date(0),
-          secure: process.env.NODE_ENV === 'production',
-          httpOnly: true,
-          sameSite: 'lax'
-        });
-      });
-
-      return redirectResponse;
     }
   }
 

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상세 페이지 와이어프레임</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .header {
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        .main-container {
+            display: flex;
+            flex-grow: 1;
+            gap: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            min-height: 0;
+        }
+        .panel {
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+        .video-panel {
+            flex-basis: 50%; /* Default width */
+            min-width: 30%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .video-placeholder {
+            width: 90%;
+            flex-grow: 1;
+            background-color: #000;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        .divider {
+            flex-basis: 10px;
+            background-color: #e0e0e0;
+            cursor: col-resize;
+            border-radius: 5px;
+        }
+        .editor-panel {
+            flex-basis: 50%; /* Default width */
+            min-width: 30%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .editor-header h2 {
+            font-size: 20px;
+            margin: 0;
+        }
+        .save-button {
+            padding: 8px 16px;
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .segmented-control {
+            display: flex;
+            background-color: #e9e9eb;
+            border-radius: 8px;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+        .segmented-control button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background-color: transparent;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .segmented-control button.active {
+            background-color: #fff;
+            color: #007aff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .subtitle-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .subtitle-item {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            background-color: #fdfdfd;
+        }
+        .subtitle-item.active {
+            border-color: #007aff;
+            box-shadow: 0 0 5px rgba(0, 122, 255, 0.2);
+        }
+        .thumbnail-placeholder {
+            width: 80px;
+            height: 45px;
+            background-color: #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #888;
+            flex-shrink: 0;
+        }
+        .subtitle-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+        .subtitle-textarea {
+            width: 100%;
+            height: 50px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 14px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>상세 페이지 편집기 (와이어프레임)</h1>
+    </div>
+
+    <div class="main-container">
+        
+        <div class="panel video-panel">
+            <div class="video-placeholder">
+                <span>비디오 플레이어</span>
+            </div>
+        </div>
+
+        <div class="divider" title="크기 조절 핸들"></div>
+
+        <div class="panel editor-panel">
+            <div class="editor-header">
+                <h2>자막 편집기</h2>
+                <button class="save-button">변경사항 저장</button>
+            </div>
+
+            <div class="segmented-control">
+                <button class="active">번역</button>
+                <button>원본</button>
+                <button>모두 보기</button>
+            </div>
+
+            <div class="subtitle-list">
+                <div class="subtitle-item active">
+                    <div class="thumbnail-placeholder">썸네일</div>
+                    <div class="subtitle-content">
+                        <div class="timestamp">00:01.150 --> 00:03.500</div>
+                        <textarea class="subtitle-textarea">이것은 첫 번째 번역된 자막입니다.</textarea>
+                    </div>
+                </div>
+                <div class="subtitle-item">
+                    <div class="thumbnail-placeholder">썸네일</div>
+                    <div class="subtitle-content">
+                        <div class="timestamp">00:04.200 --> 00:06.800</div>
+                        <textarea class="subtitle-textarea">두 번째 자막 텍스트가 여기에 표시됩니다.</textarea>
+                    </div>
+                </div>
+                <div class="subtitle-item">
+                    <div class="thumbnail-placeholder">썸네일</div>
+                    <div class="subtitle-content">
+                        <div class="timestamp">00:07.100 --> 00:09.900</div>
+                        <textarea class="subtitle-textarea">그리고 이것은 세 번째 자막입니다. 필요에 따라 내용을 수정할 수 있습니다.</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
