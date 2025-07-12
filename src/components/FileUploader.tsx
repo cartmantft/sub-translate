@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useState, useRef, DragEvent } from 'react';
 import toast from 'react-hot-toast'; // Import toast
 import { logger } from '@/lib/utils/logger';
-import { generateThumbnailBase64 } from '@/lib/ffmpeg-client';
+import { generateThumbnailBase64 } from '@/lib/canvas-thumbnail';
 
 interface FileUploaderProps {
   onUploadSuccess?: (url: string, thumbnailBase64?: string) => void;
@@ -103,7 +103,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
         throw new Error('업로드된 파일의 URL을 가져오는데 실패했습니다.');
       }
 
-      // 2. 썸네일 생성 (FFmpeg.wasm 사용)
+      // 2. 썸네일 생성 (HTML5 Canvas 사용)
       let thumbnailBase64: string | undefined;
       
       try {

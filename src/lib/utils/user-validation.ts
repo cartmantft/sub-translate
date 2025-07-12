@@ -98,29 +98,29 @@ export async function validateUserStatus(userId: string): Promise<UserStatusResu
     // If we have profile data, check it for user status
     if (profileData) {
       // Check profile data for banned/deleted status
-      if (profileData.deleted_at) {
+      if ((profileData as any).deleted_at) {
         logger.warn('Deleted user attempted access (from profile)', {
           action: 'validateUserStatus',
           userId,
-          deletedAt: profileData.deleted_at,
+          deletedAt: (profileData as any).deleted_at,
           securityEvent: 'deleted_user_access_attempt'
         });
         return { 
           isValid: false, 
           reason: 'deleted',
-          deletedAt: new Date(profileData.deleted_at)
+          deletedAt: new Date((profileData as any).deleted_at)
         };
       }
 
-      if (profileData.banned_until) {
-        const bannedUntil = new Date(profileData.banned_until);
+      if ((profileData as any).banned_until) {
+        const bannedUntil = new Date((profileData as any).banned_until);
         const now = new Date();
         
         if (bannedUntil > now) {
           logger.warn('Banned user attempted access (from profile)', {
             action: 'validateUserStatus',
             userId,
-            bannedUntil: profileData.banned_until,
+            bannedUntil: (profileData as any).banned_until,
             remainingBanTime: bannedUntil.getTime() - now.getTime(),
             securityEvent: 'banned_user_access_attempt'
           });

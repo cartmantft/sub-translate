@@ -48,9 +48,9 @@ export async function generateVideoThumbnail(
 
       // 비디오 로드 완료 후 썸네일 생성
       video.addEventListener('loadeddata', () => {
-        // 비디오 시간 설정 (최소 1초, 최대 비디오 길이의 10% 지점)
+        // 비디오 시간 설정 (요청된 시간, 단 비디오 길이를 초과하지 않음)
         const duration = video.duration;
-        const optimalSeekTime = Math.min(Math.max(seekTime, 1), duration * 0.1);
+        const optimalSeekTime = Math.min(seekTime, duration - 0.5); // 끝에서 0.5초 전까지
         console.log(`비디오 길이: ${duration}초, 썸네일 추출 시점: ${optimalSeekTime}초`);
         video.currentTime = optimalSeekTime;
       });
@@ -73,23 +73,10 @@ export async function generateVideoThumbnail(
             const isShortForm = aspectRatio < 1;
             
             if (isShortForm) {
-              // 숏폼의 경우: 원본 비율 유지하되, 컨테이너는 고정 크기로
+              // 숏폼의 경우: 컨테이너는 고정 크기로
               console.log('숏폼 비디오 감지됨 (세로형)');
               canvasWidth = maxWidth;  // 컨테이너 너비는 고정
               canvasHeight = maxHeight; // 컨테이너 높이는 고정
-              
-              // 실제 비디오가 그려질 영역 계산 (컨테이너 내에서 원본 비율 유지)
-              const videoDisplayHeight = maxHeight;
-              const videoDisplayWidth = Math.round(videoDisplayHeight * aspectRatio);
-              
-              // 비디오가 컨테이너보다 넓으면 너비에 맞춤
-              if (videoDisplayWidth > maxWidth) {
-                const videoDisplayWidth2 = maxWidth;
-                const videoDisplayHeight2 = Math.round(videoDisplayWidth2 / aspectRatio);
-                console.log(`숏폼 썸네일 크기 조정: ${videoDisplayWidth2}x${videoDisplayHeight2} (컨테이너: ${canvasWidth}x${canvasHeight})`);
-              } else {
-                console.log(`숏폼 썸네일 크기: ${videoDisplayWidth}x${videoDisplayHeight} (컨테이너: ${canvasWidth}x${canvasHeight})`);
-              }
             } else {
               // 일반 가로형 비디오: 기존 로직 유지
               if (aspectRatio > maxWidth / maxHeight) {
@@ -250,6 +237,6 @@ export function isThumbnailSupported(): boolean {
 /**
  * 리소스 정리 (HTML5 Canvas는 자동 정리)
  */
-export function cleanupFFmpeg(): void {
+export function cleanupCanvas(): void {
   console.log('HTML5 Canvas 리소스 정리 완료');
 }

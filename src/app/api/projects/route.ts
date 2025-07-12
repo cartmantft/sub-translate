@@ -1,139 +1,16 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import { execSync } from 'child_process';
-import fs from 'fs';
+// execSync와 fs는 더 이상 필요하지 않음 (FFmpeg.wasm 사용)
 import crypto from 'crypto';
 import { logger } from '@/lib/utils/logger';
 import { validateUserStatus } from '@/lib/utils/user-validation';
 
-// Thumbnail generation function - server-side implementation with ffmpeg
-async function generateThumbnail(videoUrl: string, supabase: Awaited<ReturnType<typeof createClient>>): Promise<string | null> {
-  try {
-    
-    console.log('Server-side thumbnail generation for:', videoUrl);
-    
-    // Create unique filename for thumbnail
-    const timestamp = Date.now();
-    const randomId = crypto.randomBytes(8).toString('hex');
-    const thumbnailFileName = `thumbnail_${timestamp}_${randomId}.jpg`;
-    const tempThumbnailPath = `/tmp/${thumbnailFileName}`;
-    const tempVideoPath = `/tmp/video_${timestamp}_${randomId}.mp4`;
-    const storageThumbnailName = `thumbnails/${thumbnailFileName}`;
-    
-    try {
-      // Use ffmpeg to extract frame at 1 second (or 5% of video duration)
-      console.log('Extracting thumbnail with ffmpeg...');
-      
-      // Download video file first to avoid CORS/network issues
-      console.log('Downloading video file first...');
-      const response = await fetch(videoUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to download video: ${response.status}`);
-      }
-      
-      const videoBuffer = await response.arrayBuffer();
-      fs.writeFileSync(tempVideoPath, Buffer.from(videoBuffer));
-      
-      const ffmpegCommand = `ffmpeg -i "${tempVideoPath}" -vf "thumbnail,scale=320:240" -frames:v 1 -update 1 -q:v 2 "${tempThumbnailPath}" -y`;
-      execSync(ffmpegCommand, { 
-        timeout: 30000, // 30 second timeout
-        stdio: 'pipe' 
-      });
-      
-      // Check if thumbnail was created
-      if (!fs.existsSync(tempThumbnailPath)) {
-        logger.error('Thumbnail file was not created', undefined, { 
-          action: 'generateThumbnail',
-          videoUrl
-        });
-        return null;
-      }
-      
-      console.log('Thumbnail extracted successfully, uploading to storage...');
-      
-      // Read the generated thumbnail file
-      const thumbnailBuffer = fs.readFileSync(tempThumbnailPath);
-      
-      // Upload thumbnail to Supabase Storage (same approach as videos)
-      console.log('Uploading thumbnail to Supabase Storage...');
-      
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('videos') // Use same bucket as videos
-        .upload(storageThumbnailName, thumbnailBuffer, {
-          contentType: 'image/jpeg',
-          cacheControl: '3600'
-        });
-      
-      if (uploadError) {
-        logger.error('Storage upload error', uploadError, { 
-          action: 'generateThumbnail',
-          operation: 'uploadThumbnail',
-          bucketName: 'videos'
-        });
-        // Clean up and return null on upload failure
-        try {
-          fs.unlinkSync(tempThumbnailPath);
-          fs.unlinkSync(tempVideoPath);
-        } catch (cleanupError) {
-          console.warn('Could not clean up temp files:', cleanupError);
-        }
-        return null;
-      }
-      
-      // Get public URL (same as videos)
-      const { data: publicUrlData } = supabase.storage
-        .from('videos')
-        .getPublicUrl(storageThumbnailName);
-      
-      const thumbnailUrl = publicUrlData.publicUrl;
-      console.log('Thumbnail uploaded successfully:', thumbnailUrl);
-      
-      // Clean up temporary files
-      try {
-        fs.unlinkSync(tempThumbnailPath);
-        fs.unlinkSync(tempVideoPath);
-      } catch (cleanupError) {
-        console.warn('Could not clean up temp files:', cleanupError);
-      }
-      
-      // Return public URL (same as videos)
-      return thumbnailUrl;
-      
-    } catch (ffmpegError) {
-      logger.error('FFmpeg error', ffmpegError, { 
-        action: 'generateThumbnail',
-        operation: 'extractFrame',
-        videoUrl
-      });
-      
-      // Clean up temp files if they exist
-      try {
-        if (fs.existsSync(tempThumbnailPath)) {
-          fs.unlinkSync(tempThumbnailPath);
-        }
-        if (fs.existsSync(tempVideoPath)) {
-          fs.unlinkSync(tempVideoPath);
-        }
-      } catch (cleanupError) {
-        console.warn('Could not clean up temp files after error:', cleanupError);
-      }
-      
-      return null;
-    }
-    
-  } catch (error) {
-    logger.error('Error in thumbnail generation', error, { 
-      action: 'generateThumbnail',
-      videoUrl
-    });
-    return null;
-  }
-}
+// 서버 사이드 FFmpeg 썸네일 생성 함수는 더 이상 사용하지 않음
+// 클라이언트 사이드 FFmpeg.wasm 사용으로 대체됨
 
 export async function POST(request: Request) {
   try {
-    const { videoUrl, transcription, subtitles, title } = await request.json();
+    const { videoUrl, transcription, subtitles, title, thumbnailBase64 } = await request.json();
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -159,14 +36,57 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    // Generate thumbnail URL
-    const thumbnailUrl = await generateThumbnail(videoUrl, supabase);
+    // Handle thumbnail URL
+    let thumbnailUrl: string | null = null;
+    
+    if (thumbnailBase64) {
+      // Client provided thumbnail (FFmpeg.wasm generated)
+      try {
+        // Extract base64 data and convert to buffer
+        const base64Data = thumbnailBase64.split(',')[1];
+        const thumbnailBuffer = Buffer.from(base64Data, 'base64');
+        
+        // Create unique filename for thumbnail
+        const timestamp = Date.now();
+        const randomId = crypto.randomBytes(8).toString('hex');
+        const thumbnailFileName = `thumbnail_${timestamp}_${randomId}.jpg`;
+        const storageThumbnailName = `thumbnails/${thumbnailFileName}`;
+        
+        // Upload thumbnail to Supabase Storage
+        const { error: uploadError } = await supabase.storage
+          .from('videos')
+          .upload(storageThumbnailName, thumbnailBuffer, {
+            contentType: 'image/jpeg',
+            cacheControl: '3600'
+          });
+        
+        if (uploadError) {
+          logger.error('Client thumbnail upload error', uploadError, { 
+            action: 'createProject',
+            operation: 'uploadClientThumbnail'
+          });
+        } else {
+          // Get public URL
+          const { data: publicUrlData } = supabase.storage
+            .from('videos')
+            .getPublicUrl(storageThumbnailName);
+          
+          thumbnailUrl = publicUrlData.publicUrl;
+          console.log('클라이언트 썸네일 업로드 성공:', thumbnailUrl);
+        }
+      } catch (thumbnailError) {
+        logger.error('Error processing client thumbnail', thumbnailError, { 
+          action: 'createProject',
+          operation: 'processClientThumbnail'
+        });
+      }
+    }
 
     const { data, error } = await supabase.from('projects').insert([
       {
         user_id: user.id,
         video_url: videoUrl,
-        thumbnail_url: thumbnailUrl, // base64 썸네일 활성화
+        thumbnail_url: thumbnailUrl, // FFmpeg.wasm 클라이언트 썸네일
         transcription: transcription,
         subtitles: subtitles,
         title: title,

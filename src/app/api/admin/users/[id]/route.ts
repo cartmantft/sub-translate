@@ -7,10 +7,10 @@ import { AdminUserManager, validateAdminPrivileges } from '@/lib/utils/admin-val
 // POST method - Admin user management actions
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: targetUserId } = params;
+    const { id: targetUserId } = await params;
     const { action, banDurationHours } = await request.json();
 
     const supabase = await createClient();
@@ -147,10 +147,10 @@ export async function POST(
 // GET method - Get user status information (for admin)
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: targetUserId } = params;
+    const { id: targetUserId } = await params;
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

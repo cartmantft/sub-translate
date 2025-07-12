@@ -5,7 +5,7 @@ import { VideoPlayerRef } from './VideoPlayer';
 import { useBreakpoint } from '@/hooks/useMediaQuery';
 
 interface VideoControlsProps {
-  videoRef: React.RefObject<VideoPlayerRef>;
+  videoRef: React.RefObject<VideoPlayerRef | null>;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
