@@ -1,6 +1,49 @@
 # 현재 컨텍스트
 
-## 현재 상태: 🔒 보안 시스템 완성 - JWT 토큰 지속성 취약점 해결 완료 (2025-07-08)
+## 현재 상태: 🎯 HTML5 Canvas 썸네일 시스템 완성 - FFmpeg.wasm 빌드 이슈 해결 (2025-07-12)
+
+### 🚀 NEW: HTML5 Canvas 썸네일 생성 시스템 구현 완료 (2025-07-12) ✅
+**배경**: FFmpeg.wasm가 Next.js 15/Turbopack 환경에서 "Module not found: Can't resolve <dynamic>" 빌드 오류 발생 ⚠️  
+**해결책**: FFmpeg.wasm → HTML5 Canvas 기반 썸네일 생성으로 완전 대체 ✅  
+**완료일**: 2025-07-12  
+**PR**: #31 - https://github.com/cartmantft/sub-translate/pull/31
+
+**🎯 구현된 HTML5 Canvas 썸네일 시스템**:
+1. ✅ **순수 브라우저 네이티브 솔루션** (`src/lib/ffmpeg-client.ts`)
+   - HTML5 Canvas API + Video Element 조합
+   - 서버리스 환경 완전 호환
+   - FFmpeg.wasm 의존성 제거로 빌드 안정성 확보
+
+2. ✅ **스마트 비디오 형태 감지** 
+   - 숏폼(세로형) 비디오 자동 감지 (aspect ratio < 1)
+   - 종횡비 유지하며 letterboxing 적용
+   - 가로형/세로형 비디오 모두 최적화된 썸네일 생성
+
+3. ✅ **고품질 썸네일 생성**
+   - 최대 해상도: 480x360px (동적 크기 조절)
+   - JPEG 품질: 90% (최적 압축률)
+   - 1초 지점에서 프레임 추출 (또는 비디오 길이의 10%)
+   - imageSmoothingQuality: 'high' 설정
+
+4. ✅ **완전한 클라이언트 통합** (`src/components/FileUploader.tsx`)
+   - 비디오 업로드 시 자동 썸네일 생성
+   - Base64 데이터 URL 형태로 반환
+   - 로딩 상태 표시 ("썸네일 생성 중...")
+   - 에러 처리: 썸네일 실패해도 업로드 계속 진행
+
+5. ✅ **리소스 관리 최적화**
+   - 메모리 누수 방지: Blob URL 자동 정리
+   - DOM 요소 자동 제거: video, canvas 요소 cleanup
+   - FileReader를 통한 안전한 Base64 변환
+
+**🛡️ 기술적 이점**:
+- ✅ FFmpeg.wasm 빌드 호환성 문제 완전 해결
+- ✅ 서버리스 환경 완벽 지원 (Vercel 배포 안정성)
+- ✅ 브라우저 네이티브 성능 (WebAssembly 오버헤드 없음)
+- ✅ 종속성 단순화 (package.json 정리)
+- ✅ 숏폼 콘텐츠 대응 (TikTok, YouTube Shorts 등)
+
+## 이전 상태: 🔒 보안 시스템 완성 - JWT 토큰 지속성 취약점 해결 완료 (2025-07-08)
 
 ### 🚨 NEW: 중대 보안 취약점 해결 완료 - JWT 토큰 지속성 문제 (2025-07-08) ✅
 **문제**: DB에서 삭제된 사용자의 기존 JWT 토큰으로 계속 시스템 접근 가능 ⚠️  

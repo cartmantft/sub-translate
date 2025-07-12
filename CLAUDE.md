@@ -57,16 +57,17 @@ GOOGLE_API_KEY=your_google_api_key
 - **Deployment**: Vercel
 
 ### Core Data Flow
-1. User uploads video → stored in Supabase Storage
+1. User uploads video → stored in Supabase Storage + HTML5 Canvas thumbnail generation
 2. `/api/transcribe` → calls Whisper API for transcription
 3. `/api/translate` → calls Gemini API for translation
-4. `/api/projects` → saves project data to Supabase
-5. Dashboard displays user's saved projects
+4. `/api/projects` → saves project data + thumbnail to Supabase
+5. Dashboard displays user's saved projects with thumbnails
 
 ### Key Directories
 - `/src/app/` - Next.js App Router pages and API routes
 - `/src/components/` - React components (FileUploader, SubtitleEditor, VideoPlayer)
 - `/src/lib/supabase/` - Supabase client configuration (server/client versions)
+- `/src/lib/ffmpeg-client.ts` - HTML5 Canvas thumbnail generation (replacing FFmpeg.wasm)
 - `/tests/` - Comprehensive test suite with Page Object Model
 - `/tests/pages/` - Page Object Model structure for E2E tests
 - `/tests/fixtures/` - Test fixtures (auth.fixture.ts for authentication)
@@ -88,6 +89,9 @@ GOOGLE_API_KEY=your_google_api_key
 - ✅ Authentication flow testing (login → dashboard access)
 - ✅ Performance and accessibility testing infrastructure
 - ✅ AI code review quality assurance applied
+- ✅ HTML5 Canvas thumbnail generation system (replacing FFmpeg.wasm)
+- ✅ Short-form video support with smart aspect ratio detection
+- ✅ Serverless deployment compatibility (Vercel/Netlify)
 
 ### Development Notes
 - Always check RLS policies when working with Supabase tables
@@ -153,7 +157,16 @@ GOOGLE_API_KEY=your_google_api_key
 - ✅ **SECURITY TESTING TOOLS**: Development utilities for security validation and penetration testing
 - ✅ **ENTERPRISE-GRADE SESSION SECURITY**: Zero-tolerance policy for deleted/banned user access
 
-### Latest UI/UX Enhancement (2025-07-08) - SMART VIDEO EXPORT FEATURE ✅
+### Latest Technical Enhancement (2025-07-12) - HTML5 CANVAS THUMBNAIL SYSTEM ✅
+- 🎯 **FFmpeg.wasm REPLACEMENT**: Replaced FFmpeg.wasm with HTML5 Canvas to resolve Next.js 15/Turbopack build issues
+- ✅ **SERVERLESS COMPATIBILITY**: Native browser APIs ensure compatibility with all serverless platforms
+- ✅ **SMART VIDEO DETECTION**: Automatic short-form (vertical) video detection with aspect ratio preservation
+- ✅ **OPTIMIZED QUALITY**: 480x360 max resolution with 90% JPEG quality for optimal file size
+- ✅ **RESOURCE MANAGEMENT**: Automatic cleanup of Canvas, Video elements, and Blob URLs
+- ✅ **ERROR RESILIENCE**: Thumbnail generation failure doesn't break core upload functionality
+- ✅ **PRODUCTION READY**: Complete removal of WebAssembly dependencies for stable builds
+
+### Previous UI/UX Enhancement (2025-07-08) - SMART VIDEO EXPORT FEATURE ✅
 - 🎯 **INTELLIGENT VIDEO EXPORT**: Video Export button now respects subtitle editor tab selection
 - ✅ **CONTEXT-AWARE DOWNLOADS**: Downloads change based on active tab (번역/원본/모두보기)
 - ✅ **FILENAME DIFFERENTIATION**: Automatic filename suffixes (_original, _both) for clarity

@@ -68,7 +68,7 @@ export default function MainContent() {
   // CSRF token management for secure API requests
   const { getToken, error: csrfError } = useCsrfToken();
 
-  const handleUploadSuccess = async (url: string) => {
+  const handleUploadSuccess = async (url: string, thumbnailBase64?: string) => {
     setVideoSrc(url);
     setError(null);
     setLoading(true);
@@ -166,18 +166,33 @@ export default function MainContent() {
       setCurrentStep('complete');
 
       // Step 5: Save the project to the database via API route
+      const requestBody: {
+        videoUrl: string;
+        transcription: string;
+        subtitles: SubtitleSegment[];
+        originalSegments: { start: number; end: number; text: string }[];
+        title: string;
+        thumbnailBase64?: string;
+      } = {
+        videoUrl: url,
+        transcription: transcriptionText,
+        subtitles: subtitleSegments,
+        originalSegments: whisperSegments || [],
+        title: `Video Project - ${new Date().toISOString().split('T')[0]}`,
+      };
+
+      // If we have a thumbnail base64, include it in the request
+      if (thumbnailBase64) {
+        requestBody.thumbnailBase64 = thumbnailBase64;
+        console.log('썸네일 Base64 포함:', thumbnailBase64.length);
+      }
+
       const response = await fetchWithCsrf('/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          videoUrl: url,
-          transcription: transcriptionText,
-          subtitles: subtitleSegments,
-          originalSegments: whisperSegments || [],
-          title: `Video Project - ${new Date().toISOString().split('T')[0]}`,
-        }),
+        body: JSON.stringify(requestBody),
       }, csrfToken);
 
       const result = await response.json();

@@ -72,13 +72,13 @@ export default function Navigation() {
       }
       
       // Get CSRF token for secure API request
-      let response;
-      const timeoutPromise = new Promise((_, reject) => 
+      let response: Response;
+      const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Logout timeout')), 5000)
       );
       
       try {
-        const logoutPromise = async () => {
+        const logoutPromise = async (): Promise<Response> => {
           if (csrfError) {
             logger.warn('CSRF system unavailable during signout, attempting without token', { component: 'Navigation', action: 'handleSignOut', csrfError });
             // Fallback to regular fetch if CSRF system is unavailable

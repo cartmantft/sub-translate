@@ -3,6 +3,7 @@ interface SubtitleSegment {
   startTime: number;
   endTime: number;
   text: string;
+  originalText?: string;
 }
 
 // Convert seconds to SRT time format (HH:MM:SS,mmm)

@@ -6,6 +6,9 @@
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
 - **UI Components:** Radix UI 또는 유사한 라이브러리를 접근성 있고 스타일이 지정되지 않은 구성 요소에 사용할 수 있습니다.
+- **Media Processing:** HTML5 Canvas API + Video Element (썸네일 생성)
+  - **이전:** FFmpeg.wasm (빌드 호환성 문제로 제거됨)
+  - **현재:** 브라우저 네이티브 Canvas API (서버리스 환경 완전 호환)
 
 ## Backend / Database
 
@@ -19,6 +22,18 @@
 
 - **Transcription:** OpenAI Whisper API
 - **Translation:** Google Gemini API (또는 다른 강력한 LLM)
+
+## 미디어 처리
+
+- **비디오 썸네일 생성:** HTML5 Canvas API + Video Element
+  - **구현 위치:** `src/lib/ffmpeg-client.ts` (ffmpeg 명명은 호환성 유지용)
+  - **지원 기능:** 
+    - 480x360 최대 해상도 (동적 크기 조절)
+    - 종횡비 유지 (숏폼 비디오 자동 감지)
+    - JPEG 90% 품질로 최적화
+    - 1초 지점 또는 비디오 길이 10% 지점에서 프레임 추출
+  - **출력 형태:** Base64 데이터 URL
+  - **장점:** 서버리스 환경 완전 호환, 빌드 의존성 없음
 
 ## 배포
 
