@@ -4,15 +4,17 @@ import { createClient } from '@/lib/supabase/client';
 import { useState, useRef, DragEvent } from 'react';
 import toast from 'react-hot-toast'; // Import toast
 import { logger } from '@/lib/utils/logger';
+import { generateThumbnailBase64 } from '@/lib/ffmpeg-client';
 
 interface FileUploaderProps {
-  onUploadSuccess?: (url: string) => void;
+  onUploadSuccess?: (url: string, thumbnailBase64?: string) => void;
 }
 
 export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
   const supabase = createClient();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [generatingThumbnail, setGeneratingThumbnail] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -81,6 +83,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     const loadingToastId = toast.loading('파일 업로드 중...');
 
     try {
+      // 1. 비디오 파일 업로드
       const fileName = `${Date.now()}_${file.name}`;
       
       const { error } = await supabase.storage
@@ -100,9 +103,36 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
         throw new Error('업로드된 파일의 URL을 가져오는데 실패했습니다.');
       }
 
+      // 2. 썸네일 생성 (FFmpeg.wasm 사용)
+      let thumbnailBase64: string | undefined;
+      
+      try {
+        setGeneratingThumbnail(true);
+        toast.loading('썸네일 생성 중...', { id: loadingToastId });
+        
+        // HTML5 Canvas로 썸네일 생성 (종횡비 유지, 숏폼 지원)
+        thumbnailBase64 = await generateThumbnailBase64(file, {
+          maxWidth: 480,
+          maxHeight: 360,
+          seekTime: 1, // 1초 지점에서 썸네일 추출
+          quality: 0.9, // JPEG 품질 90%
+          maintainAspectRatio: true // 종횡비 유지 (숏폼 자동 감지)
+        });
+        
+        console.log('썸네일 생성 완료:', thumbnailBase64.length);
+      } catch (thumbnailError) {
+        logger.error('썸네일 생성 실패', thumbnailError, { 
+          component: 'FileUploader', 
+          action: 'generateThumbnail' 
+        });
+        console.warn('썸네일 생성 실패, 계속 진행:', thumbnailError);
+      } finally {
+        setGeneratingThumbnail(false);
+      }
+
       toast.success('파일이 성공적으로 업로드되었습니다!', { id: loadingToastId });
       if (onUploadSuccess) {
-        onUploadSuccess(publicUrlData.publicUrl);
+        onUploadSuccess(publicUrlData.publicUrl, thumbnailBase64);
       }
     } catch (error: unknown) {
       logger.error('Error uploading file', error, { component: 'FileUploader', action: 'handleUpload' });
@@ -127,17 +157,17 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        onClick={() => !uploading && fileInputRef.current?.click()}
+        onClick={() => !(uploading || generatingThumbnail) && fileInputRef.current?.click()}
         className={`relative border-2 border-dashed rounded-xl p-8 transition-all duration-300 cursor-pointer
           ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50 hover:border-gray-400'}
-          ${uploading ? 'pointer-events-none opacity-60' : ''}`}
+          ${(uploading || generatingThumbnail) ? 'pointer-events-none opacity-60' : ''}`}
       >
         <input
           ref={fileInputRef}
           type="file"
           accept="video/*"
           onChange={handleFileChange}
-          disabled={uploading}
+          disabled={uploading || generatingThumbnail}
           className="hidden"
         />
         
@@ -169,7 +199,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
               <p className="text-sm text-gray-500 mb-4">
                 {formatFileSize(file.size)}
               </p>
-              {!uploading && (
+              {!(uploading || generatingThumbnail) && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -184,20 +214,26 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           )}
         </div>
 
-        {uploading && (
+        {(uploading || generatingThumbnail) && (
           <div className="absolute inset-0 bg-white bg-opacity-90 rounded-xl flex items-center justify-center">
             <div className="text-center">
               <div className="mb-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
               </div>
-              <p className="text-sm font-medium text-gray-700">업로드 중...</p>
-              <p className="text-xs text-gray-500 mt-1">잠시만 기다려주세요</p>
+              <p className="text-sm font-medium text-gray-700">
+                {uploading && '업로드 중...'}
+                {generatingThumbnail && '썸네일 생성 중...'}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {uploading && '잠시만 기다려주세요'}
+                {generatingThumbnail && 'HTML5 Canvas 처리 중...'}
+              </p>
             </div>
           </div>
         )}
       </div>
 
-      {file && !uploading && (
+      {file && !(uploading || generatingThumbnail) && (
         <button
           onClick={handleUpload}
           className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
