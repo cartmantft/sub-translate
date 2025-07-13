@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-// execSync와 fs는 더 이상 필요하지 않음 (FFmpeg.wasm 사용)
+// execSync와 fs는 더 이상 필요하지 않음 (클라이언트 사이드 HTML5 Canvas 사용)
 import crypto from 'crypto';
 import { logger } from '@/lib/utils/logger';
 import { validateUserStatus } from '@/lib/utils/user-validation';
 
-// 서버 사이드 FFmpeg 썸네일 생성 함수는 더 이상 사용하지 않음
-// 클라이언트 사이드 FFmpeg.wasm 사용으로 대체됨
+// 서버 사이드 썸네일 생성 함수는 더 이상 사용하지 않음
+// 클라이언트 사이드 HTML5 Canvas 사용으로 대체됨
 
 export async function POST(request: Request) {
   try {
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     let thumbnailUrl: string | null = null;
     
     if (thumbnailBase64) {
-      // Client provided thumbnail (FFmpeg.wasm generated)
+      // Client provided thumbnail (HTML5 Canvas generated)
       try {
         // Extract base64 data and convert to buffer
         const base64Data = thumbnailBase64.split(',')[1];
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       {
         user_id: user.id,
         video_url: videoUrl,
-        thumbnail_url: thumbnailUrl, // FFmpeg.wasm 클라이언트 썸네일
+        thumbnail_url: thumbnailUrl, // HTML5 Canvas 클라이언트 썸네일
         transcription: transcription,
         subtitles: subtitles,
         title: title,
