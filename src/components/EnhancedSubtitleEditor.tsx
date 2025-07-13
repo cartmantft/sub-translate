@@ -181,6 +181,12 @@ export default function EnhancedSubtitleEditor({
     }
   };
 
+  // CSS class constants to reduce duplication
+  const baseButtonClasses = 'flex-1 px-3 py-2 rounded-md text-base font-medium transition-all';
+  const activeClasses = 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm';
+  const inactiveClasses = 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100';
+  const editingTextareaClasses = 'w-full p-2 border border-blue-300 dark:border-blue-500 rounded text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-y min-h-[60px] focus:outline-none focus:ring-2 focus:ring-blue-500';
+
   return (
     <div className={`flex flex-col h-full ${className}`} data-subtitle-editor data-current-view-mode={viewMode}>
       {/* Header with save button */}
@@ -218,30 +224,24 @@ export default function EnhancedSubtitleEditor({
       <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mb-4 flex-shrink-0">
         <div className="flex space-x-1">
           <button
-            className={`flex-1 px-3 py-2 rounded-md text-base font-medium transition-all ${
-              viewMode === 'translation'
-                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
-                : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+            className={`${baseButtonClasses} ${
+              viewMode === 'translation' ? activeClasses : inactiveClasses
             }`}
             onClick={() => setViewMode('translation')}
           >
             번역
           </button>
           <button
-            className={`flex-1 px-3 py-2 rounded-md text-base font-medium transition-all ${
-              viewMode === 'original'
-                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
-                : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+            className={`${baseButtonClasses} ${
+              viewMode === 'original' ? activeClasses : inactiveClasses
             }`}
             onClick={() => setViewMode('original')}
           >
             원본
           </button>
           <button
-            className={`flex-1 px-3 py-2 rounded-md text-base font-medium transition-all ${
-              viewMode === 'both'
-                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
-                : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+            className={`${baseButtonClasses} ${
+              viewMode === 'both' ? activeClasses : inactiveClasses
             }`}
             onClick={() => setViewMode('both')}
           >
@@ -302,7 +302,7 @@ export default function EnhancedSubtitleEditor({
                             handleTextChange(segment.id, field, e.target.value);
                           }}
                           onBlur={stopEditing}
-                          className="w-full p-2 border border-blue-300 dark:border-blue-500 rounded text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-y min-h-[60px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className={editingTextareaClasses}
                           autoFocus
                         />
                       ) : (
@@ -324,7 +324,7 @@ export default function EnhancedSubtitleEditor({
                           value={secondary}
                           onChange={(e) => handleTextChange(segment.id, 'originalText', e.target.value)}
                           onBlur={stopEditing}
-                          className="w-full p-2 border border-blue-300 dark:border-blue-500 rounded text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-y min-h-[60px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className={editingTextareaClasses}
                         />
                       ) : (
                         <div
