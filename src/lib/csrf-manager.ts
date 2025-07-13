@@ -118,6 +118,12 @@ class CsrfTokenManager {
         throw new Error('Invalid CSRF token response format')
       }
 
+      // Prevent race condition by only updating if the new token is fresher.
+      if (this.tokenData.expires && data.expires <= this.tokenData.expires) {
+        this.updateTokenData({ isLoading: false, error: null });
+        return this.tokenData.token;
+      }
+
       // Update token data
       this.updateTokenData({
         token: data.csrfToken,
@@ -177,7 +183,7 @@ class CsrfTokenManager {
    * Manually refresh the CSRF token
    */
   async refreshToken(): Promise<void> {
-    // Cancel any existing request and create a new one
+    // Force a new token fetch, bypassing any ongoing request
     this.activeRequest = null
     await this.getToken()
   }

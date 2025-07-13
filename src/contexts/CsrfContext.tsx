@@ -7,7 +7,7 @@
  * This ensures all components share the same token instance and prevents duplicate requests.
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import { csrfTokenManager, type CsrfTokenData } from '@/lib/csrf-manager'
 
 export interface CsrfContextValue extends CsrfTokenData {
@@ -31,13 +31,10 @@ export function CsrfProvider({ children }: CsrfProviderProps) {
     // Subscribe to token data changes from the global manager
     const unsubscribe = csrfTokenManager.subscribe(setTokenData)
 
-    // Initialize the token manager if needed
-    csrfTokenManager.initialize()
-
     return unsubscribe
   }, [])
 
-  const isTokenValid = (): boolean => {
+  const isTokenValid = useCallback((): boolean => {
     if (!tokenData.token || !tokenData.expires) {
       return false
     }
@@ -45,22 +42,22 @@ export function CsrfProvider({ children }: CsrfProviderProps) {
     // Add small buffer to account for request time
     const now = Date.now() + 1000 // 1 second buffer
     return now < tokenData.expires
-  }
+  }, [tokenData.token, tokenData.expires])
 
-  const getToken = async (): Promise<string | null> => {
+  const getToken = useCallback(async (): Promise<string | null> => {
     return csrfTokenManager.getToken()
-  }
+  }, [])
 
-  const refreshToken = async (): Promise<void> => {
+  const refreshToken = useCallback(async (): Promise<void> => {
     return csrfTokenManager.refreshToken()
-  }
+  }, [])
 
-  const contextValue: CsrfContextValue = {
+  const contextValue = useMemo(() => ({
     ...tokenData,
     getToken,
     refreshToken,
     isTokenValid
-  }
+  }), [tokenData, isTokenValid, getToken, refreshToken])
 
   return (
     <CsrfContext.Provider value={contextValue}>
