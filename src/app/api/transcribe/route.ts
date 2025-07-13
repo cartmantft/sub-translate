@@ -8,19 +8,35 @@ const openai = new OpenAI({
 
 export async function POST(request: Request) {
   try {
-    const data = await request.formData();
-    const file: File | null = data.get('file') as unknown as File;
+    const body = await request.json();
+    const { videoUrl, fileName } = body;
 
-    if (!file) {
-      return NextResponse.json({ success: false, error: 'No file provided.' });
+    if (!videoUrl) {
+      return NextResponse.json({ success: false, error: 'No video URL provided.' });
     }
 
-    console.log('Received file:', file.name);
+    logger.info('Transcription request received', {
+      action: 'transcribe-start',
+      videoUrl: videoUrl.substring(0, 100) + '...', // Log partial URL for privacy
+      fileName: fileName || 'unknown'
+    });
 
-    console.log('File details:', {
-      name: file.name,
-      type: file.type,
-      size: file.size
+    // Download the file from Supabase Storage URL
+    const response = await fetch(videoUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to download video: ${response.statusText}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const fileBlob = new Blob([arrayBuffer], { type: 'video/mp4' });
+    
+    // Create a File object for OpenAI API
+    const file = new File([fileBlob], fileName || 'video.mp4', { type: 'video/mp4' });
+
+    logger.info('Video file downloaded for transcription', {
+      action: 'transcribe-download-complete',
+      fileSize: file.size,
+      fileName: file.name
     });
     
     // For OpenAI API, we can pass the file directly

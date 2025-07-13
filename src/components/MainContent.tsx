@@ -80,25 +80,31 @@ export default function MainContent() {
       if (csrfError) {
         throw new Error(`보안 시스템 오류: ${csrfError}. 페이지를 새로고침하고 다시 시도해주세요.`);
       }
-      // Step 1: Get the video file from the URL to send to transcription API
-      const videoResponse = await fetch(url);
-      const videoBlob = await videoResponse.blob();
-      const videoFile = new File([videoBlob], 'video.mp4', { type: videoBlob.type });
-
-      // Step 2: Call transcription API
-      const formData = new FormData();
-      formData.append('file', videoFile);
-
       // Get CSRF token for secure API request
       const csrfToken = await getToken();
       
+      // Step 1: Call transcription API with video URL (not file data)
       const transcribeResponse = await fetchWithCsrf('/api/transcribe', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          videoUrl: url,
+          fileName: 'video.mp4'
+        }),
       }, csrfToken);
 
       const transcribeResult = await transcribeResponse.json();
       if (!transcribeResponse.ok) {
+        // Handle specific HTTP error codes
+        if (transcribeResponse.status === 413) {
+          throw new Error('비디오 파일이 너무 큽니다. 더 작은 파일을 업로드해주세요.');
+        } else if (transcribeResponse.status === 500) {
+          throw new Error('서버에서 비디오 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        } else if (transcribeResponse.status === 400) {
+          throw new Error(transcribeResult.error || '비디오 파일 형식을 확인해주세요.');
+        }
         throw new Error(transcribeResult.error || 'Failed to transcribe video');
       }
 
@@ -213,11 +219,15 @@ export default function MainContent() {
       
       let errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       
-      // Handle specific CSRF errors with user-friendly messages
+      // Handle specific errors with user-friendly messages
       if (errorMessage.includes('CSRF') || errorMessage.includes('403')) {
         errorMessage = '보안 토큰이 만료되었습니다. 페이지를 새로고침하고 다시 시도해주세요.';
       } else if (errorMessage.includes('401')) {
         errorMessage = '로그인이 필요합니다. 다시 로그인해주세요.';
+      } else if (errorMessage.includes('NetworkError') || errorMessage.includes('fetch')) {
+        errorMessage = '네트워크 연결을 확인하고 다시 시도해주세요.';
+      } else if (errorMessage.includes('Failed to download video')) {
+        errorMessage = '비디오 파일을 다운로드할 수 없습니다. 파일이 삭제되었거나 접근할 수 없습니다.';
       }
       
       setError(`비디오 처리 중 오류가 발생했습니다: ${errorMessage}`);
