@@ -13,6 +13,12 @@ export default function LoginPage() {
   const supabase = createClient();
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Debug environment variables (remove after testing)
+  useEffect(() => {
+    console.log('SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('SUPABASE_KEY exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  }, []);
 
   useEffect(() => {
     // Check for error messages in URL params
