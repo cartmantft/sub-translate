@@ -25,6 +25,8 @@ function AuthErrorContent() {
       setErrorMessage('서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.');
     } else if (error === 'temporarily_unavailable') {
       setErrorMessage('서비스가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.');
+    } else if (error === 'oauth_exchange_failed') {
+      setErrorMessage('소셜 로그인 연동에 실패했습니다. Google 계정 연결을 다시 시도해 주세요.');
     } else if (errorDescription) {
       // Use error description if available, but sanitize it for production
       if (process.env.NODE_ENV === 'development') {
@@ -70,10 +72,14 @@ function AuthErrorContent() {
           <div className="p-8">
             <div className="text-center mb-8">
               <p className="text-gray-700 text-lg mb-4">{errorMessage}</p>
-              {errorCode && process.env.NODE_ENV === 'development' && (
-                <p className="text-sm text-gray-500 font-mono bg-gray-100 p-2 rounded">
-                  Error Code: {errorCode}
-                </p>
+              {process.env.NODE_ENV === 'development' && (errorCode || searchParams.get('error_description')) && (
+                <div className="text-sm text-gray-500 font-mono bg-gray-100 p-3 rounded space-y-1 text-left">
+                  {errorCode && <div>Error Code: {errorCode}</div>}
+                  {searchParams.get('error') && <div>Error Type: {searchParams.get('error')}</div>}
+                  {searchParams.get('error_description') && (
+                    <div>Details: {searchParams.get('error_description')}</div>
+                  )}
+                </div>
               )}
             </div>
 
