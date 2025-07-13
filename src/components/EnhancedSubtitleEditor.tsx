@@ -215,33 +215,33 @@ export default function EnhancedSubtitleEditor({
       )}
 
       {/* Segment control */}
-      <div className="bg-gray-100 rounded-lg p-1 mb-4 flex-shrink-0">
+      <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mb-4 flex-shrink-0">
         <div className="flex space-x-1">
           <button
-            className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+            className={`flex-1 px-3 py-2 rounded-md text-base font-medium transition-all ${
               viewMode === 'translation'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-800'
+                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
             onClick={() => setViewMode('translation')}
           >
             번역
           </button>
           <button
-            className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+            className={`flex-1 px-3 py-2 rounded-md text-base font-medium transition-all ${
               viewMode === 'original'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-800'
+                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
             onClick={() => setViewMode('original')}
           >
             원본
           </button>
           <button
-            className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+            className={`flex-1 px-3 py-2 rounded-md text-base font-medium transition-all ${
               viewMode === 'both'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-800'
+                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
             onClick={() => setViewMode('both')}
           >
@@ -253,7 +253,7 @@ export default function EnhancedSubtitleEditor({
       {/* Subtitle list */}
       <div 
         ref={containerRef}
-        className="flex-1 overflow-y-auto bg-white border border-gray-200 rounded-lg"
+        className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg"
       >
         <div className="p-4 space-y-3">
           {segments.map((segment, index) => {
@@ -267,21 +267,25 @@ export default function EnhancedSubtitleEditor({
                 data-segment-index={index}
                 className={`flex gap-3 p-3 rounded-lg border transition-all ${
                   isCurrent
-                    ? 'border-blue-500 bg-blue-50 shadow-sm'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-sm'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700'
                 }`}
               >
                 {/* Thumbnail */}
-                <div className="flex-shrink-0 w-20 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded flex items-center justify-center">
-                  <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button
+                  className="flex-shrink-0 w-20 h-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded flex items-center justify-center cursor-pointer hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-500 dark:hover:to-gray-600 transition-all duration-200"
+                  onClick={() => handleSegmentClick(segment.startTime)}
+                  title={`${formatTime(segment.startTime)}로 이동`}
+                >
+                  <svg className="w-6 h-6 text-gray-400 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                </div>
+                </button>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <button
-                    className="text-xs text-gray-500 hover:text-blue-600 transition-colors mb-1 font-mono"
+                    className="text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mb-1 font-mono"
                     onClick={() => handleSegmentClick(segment.startTime)}
                   >
                     {formatTime(segment.startTime)} → {formatTime(segment.endTime)}
@@ -298,12 +302,12 @@ export default function EnhancedSubtitleEditor({
                             handleTextChange(segment.id, field, e.target.value);
                           }}
                           onBlur={stopEditing}
-                          className="w-full p-2 border border-blue-300 rounded text-sm resize-y min-h-[60px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full p-2 border border-blue-300 dark:border-blue-500 rounded text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-y min-h-[60px] focus:outline-none focus:ring-2 focus:ring-blue-500"
                           autoFocus
                         />
                       ) : (
                         <div
-                          className="text-sm text-gray-800 cursor-pointer hover:bg-gray-50 rounded p-2 -m-2"
+                          className="text-base text-gray-900 dark:text-gray-100 font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-2 -m-2"
                           onClick={() => startEditing(segment.id)}
                         >
                           {primary}
@@ -314,17 +318,17 @@ export default function EnhancedSubtitleEditor({
 
                   {/* Secondary text (for both mode) */}
                   {secondary && viewMode === 'both' && (
-                    <div className="pt-2 border-t border-gray-100">
+                    <div className="pt-2 border-t border-gray-100 dark:border-gray-600">
                       {isEditing ? (
                         <textarea
                           value={secondary}
                           onChange={(e) => handleTextChange(segment.id, 'originalText', e.target.value)}
                           onBlur={stopEditing}
-                          className="w-full p-2 border border-blue-300 rounded text-sm resize-y min-h-[60px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full p-2 border border-blue-300 dark:border-blue-500 rounded text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-y min-h-[60px] focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       ) : (
                         <div
-                          className="text-sm text-gray-600 italic cursor-pointer hover:bg-gray-50 rounded p-2 -m-2"
+                          className="text-base text-gray-700 dark:text-gray-300 italic font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-2 -m-2"
                           onClick={() => startEditing(segment.id)}
                         >
                           {secondary}
