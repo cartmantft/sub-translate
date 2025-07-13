@@ -10,36 +10,8 @@ const nextConfig: NextConfig = {
       'archived-issues/**/*'
     ]
   },
-  // CSP 및 보안 헤더 설정
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            // TODO: Consider removing 'unsafe-inline' for style-src in production by using hashes or nonces
-            // Currently needed for Tailwind CSS and Next.js inline styles
-            value: process.env.NODE_ENV === 'development' 
-              ? "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https:; media-src 'self' blob:; object-src 'none'; frame-src 'self';"
-              : "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https:; media-src 'self' blob:; object-src 'none'; frame-src 'self';"
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin'
-          }
-        ],
-      },
-    ];
-  },
+  // Security headers are now handled by Vercel's default security settings
+  // and our middleware for CSP nonce implementation
   images: {
     remotePatterns: [
       {

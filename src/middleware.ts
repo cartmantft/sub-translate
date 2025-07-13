@@ -3,20 +3,20 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { csrfMiddleware } from '@/lib/middleware/csrf'
 import { validateUserStatus } from '@/lib/utils/user-validation'
 import { logger } from '@/lib/utils/logger'
+// Edge Runtime에서는 Web Crypto API 사용
 
-// Security headers configuration
-const securityHeaders = {
-  // Content Security Policy - environment-specific configuration
-  'Content-Security-Policy': [
+// Generate CSP with nonce support
+function generateCSPWithNonce(nonce: string) {
+  const cspParts = [
     "default-src 'self'",
-    // Script src: strict for production, relaxed for development
+    // Script src: nonce-based for production, relaxed for development
     process.env.NODE_ENV === 'production' 
-      ? "script-src 'self'"
-      : "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // unsafe-eval for Next.js dev, unsafe-inline for inline scripts
-    // Style src: strict for production, relaxed for development  
+      ? `script-src 'self' 'nonce-${nonce}'`
+      : `script-src 'self' 'unsafe-eval' 'nonce-${nonce}'`, // unsafe-eval needed for Next.js dev mode
+    // Style src: nonce-based with fallback for Tailwind CSS
     process.env.NODE_ENV === 'production'
-      ? "style-src 'self'"
-      : "style-src 'self' 'unsafe-inline'", // unsafe-inline for CSS-in-JS and inline styles
+      ? `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'` // unsafe-inline still needed for Tailwind
+      : `style-src 'self' 'unsafe-inline' 'nonce-${nonce}'`,
     "img-src 'self' data: blob: https:", // Allow images from self, data URLs, blobs, and HTTPS
     "font-src 'self' data:", // Allow fonts from self and data URLs
     "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com", // API endpoints
@@ -26,7 +26,13 @@ const securityHeaders = {
     "form-action 'self'", // Restrict form actions to same origin
     "frame-ancestors 'none'", // Prevent framing (clickjacking protection)
     "upgrade-insecure-requests" // Upgrade HTTP to HTTPS
-  ].join('; '),
+  ]
+  
+  return cspParts.join('; ')
+}
+
+// Other security headers (non-CSP)
+const staticSecurityHeaders = {
   // Prevent clickjacking attacks
   'X-Frame-Options': 'DENY',
   // Prevent MIME type sniffing
@@ -48,24 +54,37 @@ const securityHeaders = {
 }
 
 export async function middleware(request: NextRequest) {
+  // Generate a unique nonce for this request using Web Crypto API (Edge Runtime compatible)
+  const array = new Uint8Array(16)
+  crypto.getRandomValues(array)
+  const nonce = btoa(String.fromCharCode(...array))
+  
   let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   })
 
-  // Apply security headers to all responses
-  Object.entries(securityHeaders).forEach(([key, value]) => {
+  // Apply static security headers
+  Object.entries(staticSecurityHeaders).forEach(([key, value]) => {
     response.headers.set(key, value)
   })
+
+  // Apply dynamic CSP with nonce
+  response.headers.set('Content-Security-Policy', generateCSPWithNonce(nonce))
+  
+  // Pass nonce to the page via custom header
+  response.headers.set('X-Nonce', nonce)
 
   // Apply CSRF protection to API routes
   const csrfResponse = await csrfMiddleware(request)
   if (csrfResponse) {
     // CSRF validation failed, return error response with security headers
-    Object.entries(securityHeaders).forEach(([key, value]) => {
+    Object.entries(staticSecurityHeaders).forEach(([key, value]) => {
       csrfResponse.headers.set(key, value)
     })
+    csrfResponse.headers.set('Content-Security-Policy', generateCSPWithNonce(nonce))
+    csrfResponse.headers.set('X-Nonce', nonce)
     return csrfResponse
   }
 
