@@ -5,7 +5,7 @@ import { validateUserStatus } from '@/lib/utils/user-validation'
 import { logger } from '@/lib/utils/logger'
 // Edge Runtime에서는 Web Crypto API 사용
 
-// Generate CSP with nonce support
+// Generate CSP with environment-appropriate settings
 function generateCSPWithNonce(nonce: string) {
   const cspParts = [
     "default-src 'self'",
@@ -13,10 +13,12 @@ function generateCSPWithNonce(nonce: string) {
     process.env.NODE_ENV === 'production' 
       ? `script-src 'self' 'nonce-${nonce}'`
       : `script-src 'self' 'unsafe-eval' 'nonce-${nonce}'`, // unsafe-eval needed for Next.js dev mode
-    // Style src: nonce-based with fallback for Tailwind CSS
+    // Style src: CSS-in-JS compatible approach
+    // Note: When nonce is present, unsafe-inline is ignored per CSP spec
+    // For CSS-in-JS compatibility, we use unsafe-inline without nonce in production
     process.env.NODE_ENV === 'production'
-      ? `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'` // unsafe-inline still needed for Tailwind
-      : `style-src 'self' 'unsafe-inline' 'nonce-${nonce}'`,
+      ? `style-src 'self' 'unsafe-inline'` // CSS-in-JS and Tailwind compatibility
+      : `style-src 'self' 'unsafe-inline'`, // Same for development
     "img-src 'self' data: blob: https:", // Allow images from self, data URLs, blobs, and HTTPS
     "font-src 'self' data:", // Allow fonts from self and data URLs
     "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com", // API endpoints
